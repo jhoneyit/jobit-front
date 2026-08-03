@@ -36,7 +36,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     session({ session, user }) {
       // 조회 쿼리가 owner_key 를 만들려면 user.id 가 세션에 있어야 한다.
-      if (session.user) session.user.id = user.id;
+      if (session.user) {
+        session.user.id = user.id;
+        // DrizzleAdapter 는 user 행을 통째로 넘긴다. 그대로 두면 password_hash 가
+        // /api/auth/session 응답에 실려 브라우저로 새어 나간다 — 반드시 지운다.
+        delete (session.user as { passwordHash?: unknown }).passwordHash;
+      }
       return session;
     },
   },
