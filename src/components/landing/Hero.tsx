@@ -8,15 +8,19 @@ import { useJdSubmit } from "@/lib/jd/use-submit";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
+/** 튕기지 않고 감기듯 멎는 값. 패널이 출렁이면 장난스러워 보인다. */
+const SPRING = { type: "spring", stiffness: 260, damping: 30, mass: 0.9 } as const;
+
 /**
  * 히어로.
  *
  * 접힌 입력판을 누르면 화면을 옮기지 않고 그 자리에서 textarea 로 펼쳐진다 —
  * 붙여넣으려고 온 사람을 한 번 더 이동시킬 이유가 없다.
  *
- * 펼치고 접는 건 CSS 가 한다 (globals.css 의 .hero-compose). 여기서는 상태만
- * data-open 으로 넘긴다 — motion 의 layout 애니메이션은 크기를 transform 으로
- * 흉내 내서 자라는 동안 안쪽 글자가 눌린다.
+ * 접힌 판과 폼은 **같은 칸에 겹쳐** 두고 상자 높이만 잇는다. 둘을 세로로 쌓아
+ * 두면 전환 중에 줄어드는 빈 칸이 위에 남아, 상자가 커지는 게 아니라 내용이
+ * 위로 밀려 올라가는 것처럼 보인다. 크기를 transform 으로 흉내 내는 것도
+ * 안 된다 — 자라는 동안 안쪽 글자가 눌렸다 펴진다.
  *
  * 접힌 상태는 여전히 /analyze 로 가는 **진짜 링크**다. JS 가 죽었거나
  * 새 탭으로 여는 클릭이면 그대로 이동해서 같은 일을 할 수 있어야 한다.
@@ -26,6 +30,9 @@ export default function Hero() {
   const [open, setOpen] = useState(false);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState<{ closed: number; opened: number } | null>(null);
   const jd = useJdSubmit();
 
   // 비어 있을 때만 접는다. 쓰던 걸 바깥 클릭 한 번으로 날리면 안 된다.
@@ -39,6 +46,27 @@ export default function Hero() {
           animate: { opacity: 1, y: 0 },
           transition: { duration: 0.6, delay, ease: EASE },
         };
+
+  /**
+   * 두 상태의 높이를 재 둔다. CSS 만으로는 auto 높이를 이을 수 없다.
+   *
+   * ResizeObserver 로 계속 지켜보는 이유: 에러 문구가 붙거나 글자 수 안내가
+   * 줄바꿈되면 폼 높이가 변한다. 한 번만 재면 그때부터 상자가 안 맞는다.
+   */
+  useEffect(() => {
+    const closed = triggerRef.current;
+    const opened = formRef.current;
+    if (!closed || !opened) return;
+
+    const measure = () =>
+      setSize({ closed: closed.offsetHeight, opened: opened.offsetHeight });
+
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(closed);
+    ro.observe(opened);
+    return () => ro.disconnect();
+  }, []);
 
   // 펼친 뒤 곧바로 쓸 수 있어야 한다. 한 번 더 클릭하게 만들지 않는다.
   useEffect(() => {
@@ -89,6 +117,9 @@ export default function Hero() {
     }
   }
 
+  // 재기 전에는 높이를 건드리지 않는다 — 접힌 판이 흐름에 그대로 있어 자연 높이가 맞다.
+  const height = size ? (open ? size.opened : size.closed) : undefined;
+
   return (
     <section className="bleed hero-band">
       <div className="hero-tint" aria-hidden="true" />
@@ -105,10 +136,17 @@ export default function Hero() {
         </motion.p>
 
         <motion.div {...rise(0.16)}>
-          {/* 두 칸을 항상 붙여 두고 행 비율만 뒤집는다. 접힘 1fr 0fr → 펼침 0fr 1fr.
-              숨는 쪽은 inert 로 초점·낭독 대상에서 뺀다. */}
-          <div className="hero-compose" data-open={open} ref={boxRef}>
-            <div className="hero-compose-slot" inert={open}>
+          <motion.div
+            className="hero-compose"
+            data-open={open}
+            ref={boxRef}
+            initial={false}
+            animate={height === undefined ? {} : { height }}
+            transition={reduced ? { duration: 0 } : SPRING}
+          >
+            {/* 접힌 판은 흐름에 남긴다 — JS 가 재기 전에도 상자 높이가 맞다.
+                폼은 절대 배치라 높이에 끼어들지 않고 같은 자리에 겹친다. */}
+            <div className="hero-compose-layer" ref={triggerRef} inert={open}>
               <Link
                 href="/analyze"
                 className="hero-compose-trigger"
@@ -124,7 +162,7 @@ export default function Hero() {
               </Link>
             </div>
 
-            <div className="hero-compose-slot" inert={!open}>
+            <div className="hero-compose-layer hero-compose-layer-form" ref={formRef} inert={!open}>
               <form className="hero-compose-form" onSubmit={jd.submit}>
                 <textarea
                   ref={taRef}
@@ -155,7 +193,7 @@ export default function Hero() {
                 )}
               </form>
             </div>
-          </div>
+          </motion.div>
         </motion.div>
 
         <motion.p className="hero-meta" {...rise(0.24)}>
