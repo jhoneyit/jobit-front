@@ -21,13 +21,17 @@
 > 이 레포는 지금 **자체 Drizzle 스키마 · Auth.js 인증 · Anthropic 직접 호출**을 전부 갖고 있고,
 > `jobit` 서버를 호출하는 코드는 한 줄도 없다. 즉 위 그림대로 동작하지 않는다.
 >
-> 반대로 `jobit`에는 **컨트롤러가 하나도 없어** 아직 호출할 대상이 없다. 그래서 전환 순서는
-> `jobit`에 엔드포인트가 먼저 생기고 → 이쪽이 자체 구현을 걷어내는 방향이다.
+> `jobit` 쪽은 **`POST /api/jd/parse` 가 동작한다** (2026-08-04 실제 LLM 호출까지 확인).
+> 질문 생성은 아직 없다. 전환 순서는 `jobit`에 엔드포인트가 생기고 → 이쪽이 자체 구현을
+> 걷어내는 방향이다.
 >
 > 이관 대상: `src/lib/db/` · `src/lib/llm/` · `src/lib/auth/` · `src/lib/jd/` ·
 > `src/lib/questions/` · `src/app/api/` · `drizzle/`
 >
-> 그대로 남는 것: `src/app/` 화면, `src/components/`, 세션 쿠키 처리.
+> 그대로 남는 것: `src/app/(site)/` 화면, `src/components/`, 세션 쿠키 처리.
+>
+> `src/app/admin/` 과 `src/lib/admin/` 은 **이 DB 를 직접 읽는다.** 이관 시점에 함께 옮기거나
+> 지워야 한다 — 자세한 내용은 아래 "관리자 콘솔".
 >
 > **아래 문서의 나머지 부분은 "현재 풀스택 상태" 기준으로 정확하다.** 이관이 진행되면 함께 고친다.
 
@@ -76,15 +80,21 @@ npm run db:migrate
 src/
 ├─ auth.ts                      Auth.js v5 (GitHub OAuth + Drizzle 어댑터)
 ├─ app/
-│  ├─ page.tsx                  ★ 랜딩 (브랜드 전용 — 입력 폼 없음)
-│  ├─ analyze/page.tsx          ★ 공고 분석 (JD 입력)
-│  ├─ history/page.tsx          ★ 내 기록 — 넣은 공고와 결과 조회
-│  ├─ signin/page.tsx           로그인 (GitHub + 이메일)
-│  ├─ signup/page.tsx           회원가입 (GitHub + 이메일)
-│  ├─ forgot-password/page.tsx  ★ 재설정 링크 요청
-│  ├─ reset-password/page.tsx   ★ 새 비밀번호 설정 (토큰)
-│  ├─ account/page.tsx          ★ 계정 설정 · 비밀번호 변경
-│  ├─ result/[id]/page.tsx      결과 (SSR — 공유 링크 SEO 대비)
+│  ├─ layout.tsx                <html>/<body> · 테마 초기화만
+│  ├─ (site)/                   ← 사용자 화면. 라우트 그룹이라 URL 에는 안 나타난다
+│  │  ├─ layout.tsx             헤더 · 푸터 · Lenis 스크롤
+│  │  ├─ page.tsx               ★ 랜딩 (브랜드 전용 — 입력 폼 없음)
+│  │  ├─ analyze/page.tsx       ★ 공고 분석 (JD 입력)
+│  │  ├─ history/page.tsx       ★ 내 기록 — 넣은 공고와 결과 조회
+│  │  ├─ signin/page.tsx        로그인 (GitHub + 이메일)
+│  │  ├─ signup/page.tsx        회원가입 (GitHub + 이메일)
+│  │  ├─ forgot-password/page.tsx  ★ 재설정 링크 요청
+│  │  ├─ reset-password/page.tsx   ★ 새 비밀번호 설정 (토큰)
+│  │  ├─ account/page.tsx       ★ 계정 설정 · 비밀번호 변경
+│  │  └─ result/[id]/page.tsx   결과 (SSR — 공유 링크 SEO 대비)
+│  ├─ admin/                    ★ 관리자 콘솔 (아래 §관리자 콘솔)
+│  │  ├─ login/                 admin 로그인 (사용자 세션과 무관)
+│  │  └─ (dash)/                인증 필요 — 대시보드 · 제출 이력 · 공고 · 토큰 사용량
 │  ├─ actions/                  signIn/signOut · 제출 이력 삭제 (Server Actions)
 │  └─ api/
 │     ├─ auth/[...nextauth]/    Auth.js 콜백
@@ -255,6 +265,40 @@ SMTP 가 필요하면 `Mailer` 인터페이스를 구현한 드라이버를 하�
 - **계정 드롭다운** — 라이브러리 없이 직접 만들었고 접근성 요건을 챙겼습니다:
   `aria-haspopup`/`aria-expanded`, Escape 로 닫고 포커스 복귀, 바깥 클릭·라우트 이동 시 자동 닫힘,
   위/아래 방향키로 항목 이동.
+
+## 관리자 콘솔
+
+`http://localhost:3000/admin` — 기본 계정 **`admin` / `admin`**.
+
+| 메뉴 | 보여주는 것 |
+|---|---|
+| 대시보드 | 사용자·공고·제출·질문 세트 수, 누적 토큰·비용, 기능별 비용 |
+| 제출 이력 | **누가 어떤 공고를 넣었는지** — 요구사항·질문 개수, 공고 상세로 이동 |
+| 공고 | 등록된 공고 전체 (제출이 없는 것 포함) |
+| 공고 상세 | 파싱 결과 · 제출자 · 요구사항 · **생성된 질문(답변 뼈대·꼬리질문)** · 원문 |
+| 토큰 사용량 | 모델별 · 일별 · 최근 호출 100건 (`llm_call_log`) |
+
+### 설계 메모
+
+- **Auth.js 를 쓰지 않는다.** 관리자를 `user` 테이블에 넣으면 가입자 수·제출 이력 통계에
+  관리자가 섞이고, 세션이 얽히면 "로그아웃했는데 관리자만 풀린다" 같은 혼선이 생긴다.
+  `AUTH_SECRET` 으로 서명한 쿠키 하나(`jobit_admin`, 8시간, `/admin` 경로 한정)로 끝낸다.
+  만료 시각을 쿠키 안에 넣고 **그 값까지 서명에 포함**하므로 쿠키를 손으로 되살릴 수 없다.
+- **인증 검사는 `(dash)/layout.tsx` 한 곳뿐이다.** 그룹 안의 모든 페이지가 이 레이아웃을
+  지나므로 페이지를 추가하다 가드를 빠뜨릴 수 없다. 미들웨어를 쓰지 않은 것도 같은 이유 —
+  매처 패턴을 따로 관리하면 언젠가 경로가 새어 나간다.
+- **조회는 `lib/admin/queries.ts` 에만 둔다.** `lib/store.ts` 쪽은 전부 `owner_key` 로 범위를
+  좁히는 게 전제인데 여기는 반대로 전수 조회다. 같은 파일에 두면 관리자용 쿼리가 언젠가
+  사용자 경로로 샌다.
+
+> ### ⚠️ 운영에 그대로 올리지 말 것
+>
+> `ADMIN_PASSWORD` 를 설정하지 않으면 **운영(`NODE_ENV=production`)에서는 `/admin` 이 열리지
+> 않는다** — 기본 비밀번호로 배포되면 아무나 전체 제출 이력과 사용자 목록을 보게 된다.
+> `/api/cost` 가 운영에서 404 를 내는 것과 같은 취지다.
+>
+> 다만 이 콘솔에는 **감사 로그도, 계정 분리도, 2단계 인증도 없다.** 비밀번호를 설정해 운영에서
+> 켤 생각이라면 그 전에 최소한 접근 로그부터 붙이는 것이 좋다.
 
 ## 스펙 대비 구현 상태
 
