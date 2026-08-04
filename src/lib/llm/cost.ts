@@ -36,7 +36,8 @@ export function recordLlmCall(entry: Omit<LlmCallLog, "id" | "createdAt">): void
       outputTokens: entry.outputTokens,
       cacheReadTokens: entry.cacheReadTokens,
       cacheCreationTokens: entry.cacheCreationTokens,
-      costUsd: entry.costUsd,
+      // numeric(12,6) 컬럼이라 문자열로 넣는다.
+      costUsd: String(entry.costUsd),
       cacheHit: entry.cacheHit,
       latencyMs: entry.latencyMs,
     })
@@ -57,7 +58,7 @@ export async function listLlmCalls(limit = 50): Promise<LlmCallLog[]> {
     outputTokens: r.outputTokens,
     cacheReadTokens: r.cacheReadTokens,
     cacheCreationTokens: r.cacheCreationTokens,
-    costUsd: r.costUsd,
+    costUsd: Number(r.costUsd),
     cacheHit: r.cacheHit,
     latencyMs: r.latencyMs,
     createdAt: r.createdAt.toISOString(),

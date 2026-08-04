@@ -1,10 +1,9 @@
 import {
   boolean,
-  doublePrecision,
   index,
   integer,
   jsonb,
-  pgEnum,
+  numeric,
   pgTable,
   primaryKey,
   smallint,
@@ -12,17 +11,26 @@ import {
   timestamp,
   uniqueIndex,
   uuid,
+  varchar,
 } from "drizzle-orm/pg-core";
 import type { AdapterAccountType } from "next-auth/adapters";
-import type { ParsedJd } from "@/lib/types";
+import type { LlmFeature, ParsedJd, QuestionCategory, RequirementKind } from "@/lib/types";
 
 /**
  * 스펙 §3 데이터 모델의 Drizzle 구현.
  *
- * 스펙 SQL 과 다른 점은 두 가지뿐이고, 둘 다 이유가 있다:
- *  1) Auth.js 표준 테이블(user/account/session/verificationToken)이 추가됐다 — GitHub OAuth 용.
- *  2) `jd_submission` 테이블이 추가됐다 — 아래 주석 참고. 스펙에는 없지만
- *     "회원이 자기가 넣은 JD 를 조회한다"를 캐시(§4.1)를 깨지 않고 구현하려면 필요하다.
+ * ## ⚠️ 이 파일은 더 이상 스키마의 정본이 아니다 (2026-08-04 DB 단일화)
+ *
+ * 스키마 소유권은 **`jobit` 쪽 Flyway** 에 있다 (`jobit/src/main/resources/db/migration/`).
+ * 한 DB 에 마이그레이션 도구가 둘이면 반드시 어긋나므로 `drizzle-kit` 은 마이그레이션에서
+ * 손을 뗐다. 이 파일은 **Flyway 가 만든 테이블을 읽고 쓰기 위한 타입 선언**일 뿐이다.
+ *
+ * 컬럼을 바꾸려면 여기가 아니라 Flyway 에 마이그레이션을 추가하고, 그 다음 이 파일을 맞춘다.
+ * 순서를 뒤집으면 런타임에 "column does not exist" 로 터진다.
+ *
+ * **enum 은 Postgres 네이티브 타입이 아니라 varchar + CHECK 다.** 값을 추가할 때 ALTER TYPE
+ * 없이 마이그레이션 한 줄로 끝나기 때문이다 (Flyway V2 결정). Drizzle 쪽은 `$type<>` 로
+ * 타입 안전성만 확보한다 — DB 제약은 CHECK 가 건다.
  */
 
 // ─── Auth.js 표준 테이블 ──────────────────────────────────────────────────
@@ -108,11 +116,8 @@ export const passwordResetTokens = pgTable(
 
 // ─── §3.1 공고 ────────────────────────────────────────────────────────────
 
-export const requirementKind = pgEnum("requirement_kind", [
-  "REQUIRED",
-  "PREFERRED",
-  "RESPONSIBILITY",
-]);
+/** DB 는 varchar(20) + CHECK 로 제약한다 (Flyway V2). 여기서는 타입만 좁힌다. */
+const requirementKind = (name: string) => varchar(name, { length: 20 }).$type<RequirementKind>();
 
 /**
  * 공고는 **전역적으로 하나**다. content_hash 로 중복 제거한다 (§4.1).
@@ -183,13 +188,8 @@ export const jdSubmissions = pgTable(
 
 // ─── §3.2 면접 질문 ───────────────────────────────────────────────────────
 
-export const questionCategory = pgEnum("question_category", [
-  "CS",
-  "STACK",
-  "EXPERIENCE",
-  "DESIGN",
-  "CULTURE",
-]);
+/** DB 는 varchar(20) + CHECK (Flyway V2). */
+const questionCategory = (name: string) => varchar(name, { length: 20 }).$type<QuestionCategory>();
 
 export const questionSets = pgTable(
   "question_set",
@@ -231,12 +231,8 @@ export const questions = pgTable(
 
 // ─── §3.5 비용 추적 ───────────────────────────────────────────────────────
 
-export const llmFeature = pgEnum("llm_feature", [
-  "JD_PARSE",
-  "QUESTION_GEN",
-  "GAP_ANALYSIS",
-  "REWRITE",
-]);
+/** DB 는 varchar(40) (Flyway V2). */
+const llmFeature = (name: string) => varchar(name, { length: 40 }).$type<LlmFeature>();
 
 export const llmCallLogs = pgTable(
   "llm_call_log",
@@ -248,7 +244,9 @@ export const llmCallLogs = pgTable(
     outputTokens: integer("output_tokens").notNull().default(0),
     cacheReadTokens: integer("cache_read_tokens").notNull().default(0),
     cacheCreationTokens: integer("cache_creation_tokens").notNull().default(0),
-    costUsd: doublePrecision("cost_usd").notNull().default(0),
+    // Flyway 는 numeric(12,6) 이다. postgres-js 가 numeric 을 문자열로 돌려주므로
+    // 읽는 쪽에서 Number() 로 바꿔 쓴다 — 돈을 double 로 두지 않기 위한 의도된 선택이다.
+    costUsd: numeric("cost_usd", { precision: 12, scale: 6 }).notNull().default("0"),
     cacheHit: boolean("cache_hit").notNull().default(false),
     latencyMs: integer("latency_ms").notNull().default(0),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
