@@ -4,45 +4,12 @@ import { llmCallLogs } from "@/lib/db/schema";
 import type { LlmCallLog } from "@/lib/types";
 
 /**
- * 스펙 §3.5 `llm_call_log`.
+ * 스펙 §3.5 `llm_call_log` — **조회 전용**.
  *
- * "처음부터 넣는다. 나중에 넣으려면 귀찮고, 없으면 어느 기능이 돈을 먹는지 안 보인다."
+ * 2026-08-04 이관 후 기록 주체는 `jobit`(Spring)이다. LLM 호출이 저쪽으로 넘어갔으므로
+ * 이 레포는 같은 테이블을 읽기만 한다. 여기에 쓰기 함수를 되살리면 두 곳이 같은 테이블에
+ * 기록하게 되어 비용 집계가 어긋난다.
  */
-
-/**
- * 호출 1건을 기록한다.
- *
- * **의도적으로 await 하지 않는다.** 비용 로그를 남기려다 사용자 응답이 느려지거나,
- * 로그 INSERT 가 실패했다고 이미 성공한 LLM 응답을 버리는 건 앞뒤가 바뀐 것이다.
- * 실패하면 콘솔에만 남기고 요청은 그대로 진행한다.
- */
-export function recordLlmCall(entry: Omit<LlmCallLog, "id" | "createdAt">): void {
-  if (process.env.NODE_ENV !== "production") {
-    console.log(
-      `[llm] ${entry.feature} ${entry.model} ` +
-        `in=${entry.inputTokens} out=${entry.outputTokens} ` +
-        `cache(r=${entry.cacheReadTokens},w=${entry.cacheCreationTokens}) ` +
-        `$${entry.costUsd.toFixed(4)} ${entry.latencyMs}ms` +
-        (entry.cacheHit ? " [HIT]" : ""),
-    );
-  }
-
-  void db
-    .insert(llmCallLogs)
-    .values({
-      feature: entry.feature,
-      model: entry.model,
-      inputTokens: entry.inputTokens,
-      outputTokens: entry.outputTokens,
-      cacheReadTokens: entry.cacheReadTokens,
-      cacheCreationTokens: entry.cacheCreationTokens,
-      // numeric(12,6) 컬럼이라 문자열로 넣는다.
-      costUsd: String(entry.costUsd),
-      cacheHit: entry.cacheHit,
-      latencyMs: entry.latencyMs,
-    })
-    .catch((err) => console.error("[llm] 비용 로그 저장 실패:", err));
-}
 
 export async function listLlmCalls(limit = 50): Promise<LlmCallLog[]> {
   const rows = await db

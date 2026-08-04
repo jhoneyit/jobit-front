@@ -16,63 +16,58 @@
 **목표 구조는 이 레포가 화면만 맡고 나머지는 `jobit`을 호출하는 것이다.**
 스펙 원본과 API 계약은 `jobit` 쪽에 있다 — `jobit/docs/api.md`, `jobit/docs/architecture.md`.
 
-> ### ⚠️ 현재는 아직 풀스택이다
+> ### 2026-08-04 이관 완료
 >
-> 이 레포는 지금 **자체 Drizzle 스키마 · Auth.js 인증 · Anthropic 직접 호출**을 전부 갖고 있고,
-> `jobit` 서버를 호출하는 코드는 한 줄도 없다. 즉 위 그림대로 동작하지 않는다.
+> **LLM 호출과 도메인 로직은 `jobit` 으로 넘어갔다.** 이 레포에 Anthropic SDK 는 없다.
+> JD 파싱(`/api/jd/parse`)과 질문 생성(`/api/questions`)은 백엔드를 프록시할 뿐이다 —
+> `src/lib/backend.ts` 가 유일한 통로다.
 >
-> `jobit` 쪽은 **`POST /api/jd/parse` 가 동작한다** (2026-08-04 실제 LLM 호출까지 확인).
-> 질문 생성은 아직 없다. 전환 순서는 `jobit`에 엔드포인트가 생기고 → 이쪽이 자체 구현을
-> 걷어내는 방향이다.
+> **DB 도 하나다.** `jobit` 의 Postgres(`:5432`)를 함께 쓰고, **스키마 소유권은 그쪽
+> Flyway** 에 있다. `drizzle-kit` 은 마이그레이션에서 손을 뗐다 (`db:studio` 만 남김).
 >
-> 이관 대상: `src/lib/db/` · `src/lib/llm/` · `src/lib/auth/` · `src/lib/jd/` ·
-> `src/lib/questions/` · `src/app/api/` · `drizzle/`
+> 여기 남은 것: 화면(`src/app/(site)/`), 인증(Auth.js), 세션 쿠키와 `owner_key` 해석,
+> 레이트 리밋, 관리자 콘솔.
 >
-> 그대로 남는 것: `src/app/(site)/` 화면, `src/components/`, 세션 쿠키 처리.
->
-> `src/app/admin/` 과 `src/lib/admin/` 은 **이 DB 를 직접 읽는다.** 이관 시점에 함께 옮기거나
-> 지워야 한다 — 자세한 내용은 아래 "관리자 콘솔".
+> **아직 남은 이관 대상**: `src/lib/store.ts` 와 `src/lib/admin/` 이 DB 를 직접 읽는다.
+> 레이트 리밋도 이쪽에만 있어 백엔드를 직접 부르면 한도가 없다.
 >
 > **아래 문서의 나머지 부분은 "현재 풀스택 상태" 기준으로 정확하다.** 이관이 진행되면 함께 고친다.
 
 ## 시작하기
 
+**백엔드가 먼저 떠 있어야 합니다.** DB 와 LLM 호출이 그쪽에 있습니다.
+
 ```bash
-cp .env.example .env.local   # 먼저 값을 채운다 (아래 표)
+cd ../jobit
+docker compose up -d          # Postgres (:5432) — 스키마는 여기 Flyway 가 만든다
+./gradlew bootRun             # http://localhost:8080
+
+cd ../jobit-front
+cp .env.example .env.local    # 값을 채운다 (아래 표)
 npm install
-npm run db:migrate           # 스키마 적용
-npm run dev                  # http://localhost:3000
+npm run dev                   # http://localhost:3000
 ```
 
-> `drizzle-kit` 은 Next 와 달리 `.env.local` 을 자동으로 읽지 않습니다.
-> `drizzle.config.ts` 에서 Next 와 같은 로더(`@next/env`)를 직접 부르도록 해 뒀으니
-> 셸에 `DATABASE_URL` 을 따로 export 할 필요는 없습니다.
+> **스키마 마이그레이션 명령은 없습니다.** `jobit` 의 Flyway 가 소유하므로 `bootRun` 이
+> 알아서 적용합니다. `db:studio` 로 들여다볼 수는 있습니다.
 > `DATABASE_URL` 은 `next build` 에도 필요합니다 — 접속하진 않으므로 CI 에서는 더미 URL 로도 통과합니다.
 
-`.env.local` 에 넣어야 하는 값 4개 — 전부 직접 발급하셔야 합니다:
+`.env.local` 에 넣어야 하는 값:
 
 | 변수 | 어디서 |
 |---|---|
-| `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com/settings/keys) |
-| `DATABASE_URL` | Neon 대시보드 → Connection string (pooler 엔드포인트 권장) |
+| `DATABASE_URL` | `jobit` 과 같은 DB — `postgresql://jobit:jobit@localhost:5432/jobit` |
+| `JOBIT_API_URL` | 백엔드 주소 — `http://localhost:8080` |
 | `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` | [github.com/settings/developers](https://github.com/settings/developers) → New OAuth App<br>Callback URL: `http://localhost:3000/api/auth/callback/github` |
 | `AUTH_SECRET` | `openssl rand -base64 32` |
 
+> `ANTHROPIC_API_KEY` 는 **이 레포에 필요 없습니다.** LLM 호출은 `jobit` 이 합니다 —
+> 키는 그쪽 OS 환경변수로 넣습니다 (`jobit/CLAUDE.md` 참고).
+
 > **Node 20 또는 22 이상**이 필요합니다. (Next 16 요구사항 — 현재 v21 에서는 설치 시 engine 경고가 뜹니다)
 
-### DB 없이 훑어보고 싶다면
-
-Docker 로 로컬 Postgres 를 띄우면 Neon 계정 없이 전부 돌아갑니다:
-
-```bash
-docker run -d --name jobit-pg -e POSTGRES_PASSWORD=jobit -e POSTGRES_DB=jobit \
-  -p 55432:5432 pgvector/pgvector:pg17
-# .env.local
-# DATABASE_URL=postgresql://postgres:jobit@localhost:55432/jobit
-npm run db:migrate
-```
-
-`localhost` 가 URL 에 있으면 SSL 을 자동으로 끕니다. pgvector 이미지를 쓰는 이유는 3단계 갭 분석에서 그대로 이어 쓰기 위해서입니다.
+> `localhost` 가 URL 에 있으면 SSL 을 자동으로 끕니다. `jobit/compose.yaml` 이 pgvector
+> 이미지를 쓰는 이유는 3단계 갭 분석에서 그대로 이어 쓰기 위해서입니다.
 
 ## 구조
 
@@ -98,15 +93,15 @@ src/
 │  ├─ actions/                  signIn/signOut · 제출 이력 삭제 (Server Actions)
 │  └─ api/
 │     ├─ auth/[...nextauth]/    Auth.js 콜백
-│     ├─ jd/parse/route.ts      §4.1 정규화 → 해시 → 캐시 → LLM
-│     ├─ questions/route.ts     §4.2 질문 생성 (SSE 스트리밍)
-│     └─ cost/route.ts          §3.5 비용 대시보드 (dev 전용)
+│     ├─ jd/parse/route.ts      §4.1 → jobit 프록시 (owner_key · 레이트 리밋만 담당)
+│     ├─ questions/route.ts     §4.2 → jobit SSE 프록시 (이벤트 형식 번역)
+│     └─ cost/route.ts          §3.5 비용 조회 (dev 전용)
 ├─ components/
 │  ├─ landing/                  ★ Hero · HeroDemo · Reveal (motion)
 │  ├─ SmoothScroll.tsx          ★ Lenis 관성 스크롤
 │  └─ SiteHeader · UserMenu · JdInputForm · QuestionStream …
 └─ lib/
-   ├─ db/schema.ts              ★ Drizzle 스키마 (§3 + Auth.js + jd_submission)
+   ├─ db/schema.ts              Drizzle 타입 선언 (정본은 jobit 의 Flyway)
    ├─ db/index.ts               커넥션 풀
    ├─ store.ts                  저장소 — Drizzle 쿼리
    ├─ owner.ts                  ★ owner_key 규약 (user:<id> | anon:<쿠키>)
@@ -118,10 +113,9 @@ src/
    ├─ mail/                     ★ 메일 드라이버 (Resend | 콘솔) + 템플릿
    ├─ types.ts                  도메인 타입
    ├─ rate-limit.ts             익명 세션 쿠키 + 세션당 호출 제한
-   ├─ jd/normalize.ts           본문 정규화 + content_hash
-   ├─ jd/parse.ts               JD 파싱 (구조화 출력 + 재검증 + 폴백)
-   ├─ questions/generate.ts     질문 생성 (스트리밍)
-   └─ llm/                      config · prompts · schema · incremental-array · client · cost
+   ├─ jd/normalize.ts           본문 정규화 + content_hash (백엔드 전 1차 검증)
+   ├─ backend.ts                ★ jobit 호출 — 두 레포 사이의 유일한 통로
+   └─ llm/cost.ts               비용 조회 전용 (기록은 jobit 이 한다)
 ```
 
 ## 랜딩 페이지
@@ -307,7 +301,7 @@ SMTP 가 필요하면 `Mailer` 인터페이스를 구현한 드라이버를 하�
 | 항목 | 상태 | 어디에 |
 |---|---|---|
 | SSE 스트리밍 (토큰 단위 렌더링) | ✅ | `api/questions` + `incremental-array.ts` |
-| 구조화 출력 + 서버 재검증, 실패 시 재시도 | ✅ | `llm/schema.ts`, `jd/parse.ts` (zod 재검증 + 2회 재시도) |
+| 구조화 출력 + 서버 재검증, 실패 시 재시도 | ✅ | `jobit` 이 담당 (`AnthropicJdParser` — 재검증 + 3회 재시도) |
 | 동일 입력 캐싱 | ✅ | `content_hash` (§4.1) + `prompt_version` (§4.2) |
 | 레이트 리밋 / 프롬프트 주입 방어 | ✅ | `rate-limit.ts`, `prompts.ts` (`<job_posting>` 격리) |
 | 모델 장애 시 폴백 | ✅ | `client.ts` `modelChain()` — 5xx/429/연결오류에만 폴백 |
