@@ -1,5 +1,7 @@
+import { auth } from "@/auth";
 import { BackendError, backendFetch } from "@/lib/backend";
-import { consume, getOrCreateSessionId } from "@/lib/rate-limit";
+import { anonOwnerKey, userOwnerKey } from "@/lib/owner";
+import { getOrCreateSessionId } from "@/lib/rate-limit";
 import type { Question, QuestionStreamEvent } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -21,25 +23,19 @@ export async function GET(req: Request) {
     return new Response("jobPostingId 가 필요합니다.", { status: 400 });
   }
 
+  // 레이트 리밋은 백엔드가 건다 (jobit LlmGuard). 여기서 미리 세면 두 곳이 각자 세어
+  // 실질 한도가 어긋나고, 무엇보다 캐시 적중까지 소비하게 된다 — 백엔드는 캐시를 지나온
+  // 뒤에만 소비하므로 그쪽이 정확하다. 이쪽이 할 일은 owner_key 를 정해 넘기는 것뿐이다.
   const sessionId = await getOrCreateSessionId();
-
-  // ⚠️ 레이트 리밋이 아직 이쪽에만 있다. 백엔드(8080)를 직접 부르면 한도가 없다.
-  //
-  // 캐시 적중 여부를 미리 보지 않는다. 그러려면 question_set 을 조회해야 하는데 그건 백엔드가
-  // 소유한 판단이고 prompt_version 이 양쪽에 중복된다. 대신 한도를 소비하고 시작하되,
-  // 캐시 적중이면 백엔드가 LLM 없이 즉시 응답하므로 손해는 한도 1회뿐이다.
-  const rate = consume(sessionId);
-  if (!rate.allowed) {
-    return new Response(
-      `요청 한도를 초과했습니다. ${Math.ceil(rate.retryAfterSec / 60)}분 뒤에 다시 시도해주세요.`,
-      { status: 429, headers: { "Retry-After": String(rate.retryAfterSec) } },
-    );
-  }
+  const session = await auth();
+  const ownerKey = session?.user?.id
+    ? userOwnerKey(session.user.id)
+    : anonOwnerKey(sessionId);
 
   try {
     const upstream = await backendFetch(
       `/api/questions?jobPostingId=${encodeURIComponent(jobPostingId)}`,
-      { headers: { accept: "text/event-stream" } },
+      { ownerKey, headers: { accept: "text/event-stream" } },
     );
     return sse(translate(upstream));
   } catch (err) {

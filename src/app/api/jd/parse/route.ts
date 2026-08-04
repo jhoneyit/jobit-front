@@ -3,8 +3,7 @@ import { auth } from "@/auth";
 import { BackendError, backendFetch } from "@/lib/backend";
 import { validateAndNormalize } from "@/lib/jd/normalize";
 import { anonOwnerKey, userOwnerKey } from "@/lib/owner";
-import { consume, getOrCreateSessionId } from "@/lib/rate-limit";
-import { findJobPostingByHash } from "@/lib/store";
+import { getOrCreateSessionId } from "@/lib/rate-limit";
 import type { ParseJdResponse, Requirement } from "@/lib/types";
 
 // 백엔드의 LLM 호출이 길게 돌기 때문에 Node 런타임 + 넉넉한 실행시간.
@@ -19,9 +18,11 @@ export const maxDuration = 120;
  * 이 레포만 할 수 있는 것들뿐이다 — 세션에서 `owner_key` 를 뽑고, 세션 기준 레이트 리밋을
  * 걸고, 백엔드 응답을 화면이 쓰는 형태로 옮긴다.
  *
- * 정규화를 여기서도 한 번 하는 이유는 두 가지다: (1) 100자 미만 같은 명백한 입력은
- * 백엔드까지 가지 않고 즉시 400 으로 돌려보내는 게 빠르고, (2) 아래 캐시 판정에 해시가 필요하다.
- * 진짜 정규화·해시·캐시는 백엔드가 다시 한다 — 여기서 만든 값은 버려진다.
+ * 정규화를 여기서도 한 번 하는 이유는 100자 미만 같은 명백한 입력을 백엔드까지 보내지 않고
+ * 즉시 400 으로 끊기 위해서다. 진짜 정규화·해시·캐시는 백엔드가 다시 한다.
+ *
+ * **레이트 리밋도 백엔드가 건다** (jobit LlmGuard). 두 곳에서 각자 세면 실질 한도가 어긋나고,
+ * 캐시 적중 판정이 이쪽에 없어 적중까지 소비하게 된다.
  */
 export async function POST(req: Request) {
   let body: { text?: unknown; sourceUrl?: unknown };
@@ -44,23 +45,6 @@ export async function POST(req: Request) {
   const ownerKey = session?.user?.id
     ? userOwnerKey(session.user.id)
     : anonOwnerKey(sessionId);
-
-  // 캐시에 있으면 백엔드도 LLM 을 부르지 않으므로 레이트 리밋을 소비하지 않는다.
-  //
-  // ⚠️ 레이트 리밋이 아직 이쪽에만 있다. 백엔드(8080)를 직접 호출하면 한도가 없다 —
-  //    공개망에 노출하기 전에 백엔드에도 넣어야 한다 (jobit/CLAUDE.md "없는 것").
-  const alreadyCached = (await findJobPostingByHash(validation.hash)) !== null;
-  if (!alreadyCached) {
-    const rate = consume(sessionId);
-    if (!rate.allowed) {
-      return NextResponse.json(
-        {
-          error: `요청 한도를 초과했습니다. ${Math.ceil(rate.retryAfterSec / 60)}분 뒤에 다시 시도해주세요.`,
-        },
-        { status: 429, headers: { "Retry-After": String(rate.retryAfterSec) } },
-      );
-    }
-  }
 
   try {
     const res = await backendFetch("/api/jd/parse", {

@@ -28,8 +28,11 @@
 > 여기 남은 것: 화면(`src/app/(site)/`), 인증(Auth.js), 세션 쿠키와 `owner_key` 해석,
 > 레이트 리밋, 관리자 콘솔.
 >
+> **레이트 리밋도 백엔드로 넘어갔다** (`jobit` 의 `LlmGuard` — 소유자별 시간당 한도 +
+> 전역 일일 비용 상한). 이쪽 `lib/rate-limit.ts` 는 이제 **익명 세션 쿠키 발급**만 한다 —
+> `owner_key` 를 정하려면 그 쿠키가 필요하다.
+>
 > **아직 남은 이관 대상**: `src/lib/store.ts` 와 `src/lib/admin/` 이 DB 를 직접 읽는다.
-> 레이트 리밋도 이쪽에만 있어 백엔드를 직접 부르면 한도가 없다.
 >
 > **아래 문서의 나머지 부분은 "현재 풀스택 상태" 기준으로 정확하다.** 이관이 진행되면 함께 고친다.
 
@@ -112,7 +115,7 @@ src/
    ├─ auth/reset.ts             ★ 재설정 토큰 발급·검증·소비
    ├─ mail/                     ★ 메일 드라이버 (Resend | 콘솔) + 템플릿
    ├─ types.ts                  도메인 타입
-   ├─ rate-limit.ts             익명 세션 쿠키 + 세션당 호출 제한
+   ├─ rate-limit.ts             익명 세션 쿠키 발급 (호출 제한은 jobit 이 건다)
    ├─ jd/normalize.ts           본문 정규화 + content_hash (백엔드 전 1차 검증)
    ├─ backend.ts                ★ jobit 호출 — 두 레포 사이의 유일한 통로
    └─ llm/cost.ts               비용 조회 전용 (기록은 jobit 이 한다)
