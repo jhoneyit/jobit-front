@@ -1,0 +1,662 @@
+/* ══════════════════════════════════════════════════════════
+   관리자 콘솔
+
+   globals.css 의 토큰(--bg/--fg/--accent …)을 그대로 쓴다.
+   색을 새로 정의하지 않으므로 라이트/다크 전환이 저절로 따라온다.
+
+   클래스는 전부 `adm-` 접두사다 — 사용자 화면과 이름이 겹치면
+   한쪽을 고칠 때 다른 쪽이 조용히 바뀐다.
+   ══════════════════════════════════════════════════════════ */
+
+.adm {
+  min-height: 100vh;
+  background: var(--bg-subtle);
+  color: var(--fg);
+}
+
+/* ── 로그인 ─────────────────────────────────────────────── */
+
+.adm-login {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.adm-login-card {
+  width: 100%;
+  max-width: 360px;
+  padding: 28px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+.adm-login-card h1 {
+  margin: 0 0 4px;
+  font-size: 20px;
+}
+
+.adm-login-lede {
+  margin: 0 0 20px;
+  font-size: 13px;
+  color: var(--fg-muted);
+}
+
+.adm-login-form {
+  display: grid;
+  gap: 14px;
+}
+
+.adm-field {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.adm-field span {
+  color: var(--fg-muted);
+}
+
+.adm-field input {
+  padding: 9px 11px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+}
+
+.adm-field input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.adm-btn {
+  padding: 9px 14px;
+  font: inherit;
+  font-size: 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.adm-btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-fg);
+}
+
+.adm-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.adm-error {
+  margin: 0;
+  padding: 9px 11px;
+  font-size: 13px;
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-radius: var(--radius);
+}
+
+.adm-login-hint {
+  margin: 16px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--fg-subtle);
+}
+
+.adm-login-hint code,
+.adm-head code {
+  padding: 1px 4px;
+  font-size: 0.92em;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+/* ── 뼈대 ───────────────────────────────────────────────── */
+
+.adm-shell {
+  display: grid;
+  grid-template-columns: 216px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.adm-side {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px 14px;
+  background: var(--bg-raised);
+  border-right: 1px solid var(--border);
+  /* 본문이 길어도 메뉴는 화면에 붙어 있게 */
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100vh;
+}
+
+.adm-brand {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--fg);
+  text-decoration: none;
+  padding: 0 8px;
+}
+
+.adm-brand span {
+  color: var(--fg-subtle);
+  font-weight: 500;
+}
+
+.adm-nav {
+  display: grid;
+  gap: 2px;
+}
+
+.adm-nav-item {
+  padding: 8px 10px;
+  font-size: 14px;
+  color: var(--fg-muted);
+  text-decoration: none;
+  border-radius: var(--radius);
+}
+
+.adm-nav-item:hover {
+  background: var(--bg-subtle);
+  color: var(--fg);
+}
+
+.adm-nav-item[data-active] {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.adm-side-foot {
+  margin-top: auto;
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.adm-side-link {
+  padding: 6px 10px;
+  color: var(--fg-muted);
+  text-decoration: none;
+  border-radius: var(--radius);
+}
+
+.adm-side-link:hover {
+  background: var(--bg-subtle);
+  color: var(--fg);
+}
+
+.adm-side-logout {
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  font-size: 13px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.adm-warn {
+  margin: 0;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--warn);
+  background: var(--warn-bg);
+  border-radius: var(--radius);
+}
+
+.adm-main {
+  padding: 28px 32px 64px;
+  max-width: 1100px;
+}
+
+/* ── 공통 ───────────────────────────────────────────────── */
+
+.adm-head {
+  margin-bottom: 24px;
+}
+
+.adm-head h1 {
+  margin: 0 0 6px;
+  font-size: 22px;
+}
+
+.adm-head p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--fg-muted);
+}
+
+.adm-back {
+  display: inline-block;
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: var(--fg-muted);
+  text-decoration: none;
+}
+
+.adm-back:hover {
+  color: var(--accent);
+}
+
+.adm-section {
+  margin-top: 32px;
+}
+
+.adm-section h2 {
+  margin: 0 0 12px;
+  font-size: 15px;
+}
+
+.adm-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.adm-section-head h2 {
+  margin: 0;
+}
+
+.adm-link {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.adm-link:hover {
+  text-decoration: underline;
+}
+
+.adm-empty {
+  margin: 0;
+  padding: 28px;
+  font-size: 14px;
+  text-align: center;
+  color: var(--fg-subtle);
+  background: var(--bg-raised);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+}
+
+.adm-count {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: var(--fg-subtle);
+}
+
+.adm-dim {
+  color: var(--fg-subtle);
+}
+
+.adm-nowrap {
+  white-space: nowrap;
+}
+
+/* ── 통계 카드 ──────────────────────────────────────────── */
+
+.adm-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+.adm-stat {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.adm-stat-label {
+  font-size: 12px;
+  color: var(--fg-muted);
+}
+
+.adm-stat-value {
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+}
+
+.adm-stat-hint {
+  font-size: 11px;
+  color: var(--fg-subtle);
+}
+
+/* ── 표 ─────────────────────────────────────────────────── */
+
+/* 좁은 화면에서 표가 레이아웃을 밀어내지 않도록 여기서만 가로 스크롤 */
+.adm-table-wrap {
+  overflow-x: auto;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.adm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.adm-table th,
+.adm-table td {
+  padding: 10px 14px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+}
+
+.adm-table thead th {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg-muted);
+  background: var(--bg-subtle);
+  white-space: nowrap;
+}
+
+.adm-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.adm-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.adm-owner {
+  display: block;
+}
+
+.adm-owner-key,
+.adm-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--fg-subtle);
+}
+
+.adm-hit {
+  margin-left: 6px;
+  padding: 1px 5px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--ok);
+  background: var(--ok-bg);
+  border-radius: 4px;
+}
+
+/* ── 목록 · 태그 ────────────────────────────────────────── */
+
+.adm-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.adm-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.adm-list .adm-owner,
+.adm-list .adm-owner-key {
+  display: inline;
+  margin: 0;
+}
+
+.adm-tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.adm-tag {
+  padding: 1px 7px;
+  font-size: 11px;
+  color: var(--fg-muted);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.adm-meta {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.adm-meta div {
+  padding: 12px 14px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.adm-meta dt {
+  font-size: 12px;
+  color: var(--fg-muted);
+  margin-bottom: 4px;
+}
+
+.adm-meta dd {
+  margin: 0;
+  font-size: 13px;
+}
+
+/* ── 요구사항 ───────────────────────────────────────────── */
+
+.adm-req {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.adm-req li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  padding: 9px 12px;
+  font-size: 13px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.adm-kind {
+  flex: none;
+  padding: 1px 7px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 999px;
+  color: var(--fg-muted);
+  background: var(--bg-subtle);
+}
+
+.adm-kind[data-kind="REQUIRED"] {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.adm-kind[data-kind="PREFERRED"] {
+  color: var(--coral-ink);
+  background: var(--coral-soft);
+}
+
+.adm-req-text {
+  flex: 1 1 320px;
+}
+
+/* ── 질문 ───────────────────────────────────────────────── */
+
+.adm-qset {
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.adm-qset-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+}
+
+.adm-qlist {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 14px;
+  font-size: 13px;
+}
+
+.adm-q-top {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 11px;
+}
+
+.adm-q-text {
+  margin: 4px 0 6px;
+  line-height: 1.6;
+}
+
+.adm-q-outline {
+  margin: 0 0 6px;
+  padding-left: 18px;
+  color: var(--fg-muted);
+  line-height: 1.7;
+}
+
+.adm-q-follow {
+  margin: 0;
+  font-size: 12px;
+  color: var(--fg-subtle);
+}
+
+/* ── 일별 막대 ──────────────────────────────────────────── */
+
+.adm-bars {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.adm-bars li {
+  display: grid;
+  grid-template-columns: 88px minmax(60px, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.adm-bar-day {
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.adm-bar-track {
+  height: 8px;
+  background: var(--bg-subtle);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.adm-bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+.adm-bar-val {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ── 원문 ───────────────────────────────────────────────── */
+
+.adm-details summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--fg-muted);
+}
+
+.adm-raw {
+  margin: 10px 0 0;
+  padding: 14px;
+  max-height: 420px;
+  overflow: auto;
+  font-size: 12px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+/* ── 좁은 화면 ──────────────────────────────────────────── */
+
+@media (max-width: 720px) {
+  .adm-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .adm-side {
+    position: static;
+    height: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .adm-nav {
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    overflow-x: auto;
+  }
+
+  .adm-main {
+    padding: 20px 16px 48px;
+  }
+}

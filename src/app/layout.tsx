@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
-import SiteFooter from "@/components/SiteFooter";
-import SiteHeader from "@/components/SiteHeader";
-import SmoothScroll from "@/components/SmoothScroll";
 import "./globals.css";
 
 /**
+ * 루트 레이아웃 — `<html>`/`<body>` 와 테마만 담당한다.
+ *
+ * 헤더·푸터·부드러운 스크롤은 여기가 아니라 `(site)/layout.tsx` 에 있다. `/admin` 은
+ * 마케팅 크롬이 붙으면 안 되는 별개 화면이라, 둘이 같은 껍데기를 쓰면 관리자 페이지에
+ * 사이트 헤더와 lenis 스크롤이 그대로 딸려온다. **라우트 그룹은 URL 에 영향을 주지 않으므로
+ * 기존 주소는 전부 그대로다.**
+ *
  * SSR 이 살아 있어야 공유 링크·질문 페이지가 검색에 잡힌다 (스펙 §2 "선택 이유").
  * 2단계에서 /q/[slug] 공유 페이지를 붙일 때 여기 메타데이터가 기준이 된다.
  */
@@ -39,12 +43,7 @@ export default function RootLayout({
     <html lang="ko" suppressHydrationWarning>
       <body>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
-        <SmoothScroll />
-        <div className="shell">
-          <SiteHeader />
-          <main>{children}</main>
-          <SiteFooter />
-        </div>
+        {children}
       </body>
     </html>
   );
