@@ -2039,3 +2039,49 @@ main:not(:has(> .hero-band)) {
     display: none;
   }
 }
+
+/* ── 한 줄씩 올라오는 연출 ──────────────────────────────────
+   서버가 한 번에 내려준 목록이라 실제로 순차 도착하는 건 아니다.
+   `--rank-delay` 를 각 줄에 심어 CSS 만으로 차례를 만든다 — 이 때문에
+   클라이언트 JS 가 필요 없고 서버 컴포넌트로 남을 수 있다.       */
+
+@keyframes rank-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* 막대는 width 가 아니라 scaleX 로 늘린다 — width 는 매 프레임 레이아웃을
+   다시 계산하지만 transform 은 합성만 한다. */
+@keyframes rank-bar-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.rank-row {
+  animation: rank-row-in 420ms cubic-bezier(0.2, 0.7, 0.3, 1) var(--rank-delay, 0ms) backwards;
+}
+
+.rank-fill {
+  transform-origin: left center;
+  /* 줄이 자리를 잡은 뒤에 막대가 자란다 (줄 지연 + 120ms) */
+  animation: rank-bar-grow 520ms cubic-bezier(0.2, 0.7, 0.3, 1)
+    calc(var(--rank-delay, 0ms) + 120ms) backwards;
+}
+
+/* 멀미를 유발하므로 끈다 — 완성된 상태로 바로 보인다 (랜딩과 같은 원칙). */
+@media (prefers-reduced-motion: reduce) {
+  .rank-row,
+  .rank-fill {
+    animation: none;
+  }
+}

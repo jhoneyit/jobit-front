@@ -43,7 +43,13 @@ export default async function StackRanking() {
 
       <ol className="rank">
         {data.items.map((item, i) => (
-          <li key={item.name} className="rank-row">
+          // 한 줄씩 차례로 올라오게 지연을 준다. 인덱스로만 계산하므로 클라이언트 JS 가
+          // 필요 없다 — CSS 애니메이션이 알아서 돈다.
+          <li
+            key={item.name}
+            className="rank-row"
+            style={{ "--rank-delay": `${i * 70}ms` } as React.CSSProperties}
+          >
             <span className="rank-no" data-top={i < 3 || undefined}>
               {i + 1}
             </span>
