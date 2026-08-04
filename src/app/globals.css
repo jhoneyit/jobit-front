@@ -1954,3 +1954,88 @@ main:not(:has(> .hero-band)) {
 .hero-line {
   display: block;
 }
+
+/* ══════════════════════════════════════════════════════════
+   스택 순위 (/analyze)
+
+   지금까지 들어온 공고에서 뽑아낸 기술 스택 빈도.
+   막대는 1위 대비 상대 길이다 — 전체 공고 수로 나누면 표본이
+   적을 때 전부 짧아져 순위가 눈에 들어오지 않는다.
+   ══════════════════════════════════════════════════════════ */
+
+.rank {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.rank-row {
+  display: grid;
+  /* 순위 · 이름 · 막대 · 건수 */
+  grid-template-columns: 22px minmax(84px, auto) minmax(60px, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.rank-no {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-subtle);
+  text-align: right;
+}
+
+/* 상위 3위만 강조한다. 전부 강조하면 강조가 아니다. */
+.rank-no[data-top] {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.rank-name {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rank-track {
+  height: 8px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.rank-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--brand), var(--accent));
+  border-radius: 999px;
+}
+
+.rank-count {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-muted);
+  white-space: nowrap;
+}
+
+.rank-note {
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--fg-subtle);
+}
+
+@media (max-width: 520px) {
+  .rank-row {
+    /* 좁은 화면에서는 막대를 버리고 이름과 건수만 남긴다 */
+    grid-template-columns: 22px 1fr auto;
+  }
+
+  .rank-track {
+    display: none;
+  }
+}

@@ -25,7 +25,15 @@ export default function QuestionStream({
   const [error, setError] = useState<string | null>(null);
   const [expected, setExpected] = useState(10);
 
-  // StrictMode 가 effect 를 두 번 돌려도 LLM 을 두 번 부르지 않게 막는다.
+  /**
+   * StrictMode 가 effect 를 두 번 돌려도 요청을 두 번 보내지 않게 막는다.
+   *
+   * **cleanup 에서 반드시 풀어야 한다.** 개발 모드의 StrictMode 는
+   * `실행 → cleanup → 재실행` 순으로 도는데, ref 가 그대로 남아 있으면 재실행이 이 가드에
+   * 걸려 조기 반환하고, 그 사이 cleanup 이 첫 요청을 abort 해 버려 **살아 있는 요청이 하나도
+   * 남지 않는다.** 화면은 "질문을 만들고 있습니다…"에서 멈추는데 서버는 생성을 마치고 저장하므로,
+   * 새로고침하면 캐시로 한꺼번에 뜬다 — 스트리밍이 안 되는 것처럼 보이는 정체가 이것이다.
+   */
   const startedFor = useRef<string | null>(null);
 
   useEffect(() => {
@@ -104,7 +112,11 @@ export default function QuestionStream({
       }
     }
 
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+      // 가드를 풀어 둔다 — StrictMode 의 재실행이 다시 시작할 수 있어야 한다.
+      if (startedFor.current === jobPostingId) startedFor.current = null;
+    };
   }, [jobPostingId]);
 
   const remaining = Math.max(0, expected - questions.length);

@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import JdInputForm from "@/components/JdInputForm";
+import StackRanking from "@/components/StackRanking";
+
+// 순위가 요청마다 새로 집계돼야 "실시간"이 된다. 정적 최적화되면 빌드 시점에 굳는다.
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "공고 분석",
@@ -20,6 +24,8 @@ export default function AnalyzePage() {
       </section>
 
       <JdInputForm />
+
+      <StackRanking />
 
       <section className="section">
         <div className="section-head">
