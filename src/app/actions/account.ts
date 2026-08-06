@@ -65,7 +65,7 @@ export async function changePassword(
   await revokeAllSessions(userId);
   await createDbSession(userId);
 
-  revalidatePath("/account");
+  revalidatePath("/profile/settings");
   return {
     success: hasPassword
       ? "비밀번호를 변경했습니다. 다른 기기에서는 다시 로그인해야 합니다."

@@ -18,5 +18,5 @@ export async function removeSubmission(jobPostingId: string): Promise<void> {
   if (!owner) return;
 
   await deleteSubmission(owner.key, jobPostingId);
-  revalidatePath("/history");
+  revalidatePath("/profile/history");
 }

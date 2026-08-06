@@ -46,7 +46,7 @@ export default async function HistoryPage() {
       {!owner?.isLoggedIn && submissions.length > 0 && (
         <div className="notice" data-tone="warn" style={{ marginBottom: 20 }}>
           아직 로그인하지 않으셨습니다. 브라우저 데이터를 지우면 이 목록도 사라집니다.{" "}
-          <Link href="/signin?callbackUrl=/history">로그인하고 계정에 저장하기 →</Link>
+          <Link href="/signin?callbackUrl=/profile/history">로그인하고 계정에 저장하기 →</Link>
         </div>
       )}
 

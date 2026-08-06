@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default async function ForgotPasswordPage() {
   const session = await auth();
-  if (session?.user) redirect("/history");
+  if (session?.user) redirect("/profile/history");
 
   return (
     <section className="auth-shell">

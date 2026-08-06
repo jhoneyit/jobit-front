@@ -15,7 +15,7 @@ export default function SiteFooter() {
         <nav className="foot-links" aria-label="푸터 메뉴">
           <Link href="/analyze">공고 분석</Link>
           <span aria-hidden="true">|</span>
-          <Link href="/history">내 기록</Link>
+          <Link href="/profile">프로필</Link>
           <span aria-hidden="true">|</span>
           <Link href="/signin">로그인</Link>
           <span aria-hidden="true">|</span>

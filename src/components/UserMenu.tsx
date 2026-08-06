@@ -139,11 +139,11 @@ export default function UserMenu({
 
           <div className="menu-sep" role="separator" />
 
-          <Link href="/history" className="menu-item" role="menuitem" data-menuitem>
+          <Link href="/profile/history" className="menu-item" role="menuitem" data-menuitem>
             <IconList />내 기록
           </Link>
-          <Link href="/account" className="menu-item" role="menuitem" data-menuitem>
-            <IconKey />비밀번호 설정
+          <Link href="/profile/settings" className="menu-item" role="menuitem" data-menuitem>
+            <IconKey />내 설정
           </Link>
 
           <div className="menu-sep" role="separator" />

@@ -47,7 +47,7 @@ export default function AnalyzePage() {
 
       <p className="footnote">
         붙여넣은 공고는 질문 생성에 쓰이고, 같은 공고를 다시 넣는 사람을 위해 캐시됩니다.
-        만든 질문은 <Link href="/history">내 기록</Link>에서 다시 열어볼 수 있습니다.
+        만든 질문은 <Link href="/profile/history">내 기록</Link>에서 다시 열어볼 수 있습니다.
         이력서 같은 개인 문서는 아직 받지 않습니다.
       </p>
     </>

@@ -9,13 +9,13 @@ import { accounts, users } from "@/lib/db/schema";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "계정 설정",
+  title: "내 설정",
   robots: { index: false, follow: false },
 };
 
-export default async function AccountPage() {
+export default async function ProfileSettingsPage() {
   const session = await auth();
-  if (!session?.user?.id) redirect("/signin?callbackUrl=/account");
+  if (!session?.user?.id) redirect("/signin?callbackUrl=/profile/settings");
 
   const userId = session.user.id;
 
@@ -36,7 +36,7 @@ export default async function AccountPage() {
   return (
     <>
       <section className="hero">
-        <h1 style={{ fontSize: 24 }}>계정 설정</h1>
+        <h1 style={{ fontSize: 24 }}>내 설정</h1>
       </section>
 
       <section className="section" style={{ marginTop: 0 }}>

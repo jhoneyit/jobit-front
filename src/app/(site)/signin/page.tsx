@@ -17,7 +17,7 @@ export default async function SignInPage({
 }: {
   searchParams: Promise<{ callbackUrl?: string; error?: string; reset?: string }>;
 }) {
-  const { callbackUrl = "/history", error, reset } = await searchParams;
+  const { callbackUrl = "/profile/history", error, reset } = await searchParams;
 
   const session = await auth();
   if (session?.user) redirect(callbackUrl);

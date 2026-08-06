@@ -20,7 +20,7 @@ export interface FormState {
 /** 열린 리디렉션 방지 — 우리 사이트 내부 경로만 허용한다. */
 function safeCallback(raw: FormDataEntryValue | null): string {
   const v = typeof raw === "string" ? raw : "";
-  return v.startsWith("/") && !v.startsWith("//") ? v : "/history";
+  return v.startsWith("/") && !v.startsWith("//") ? v : "/profile/history";
 }
 
 // ─── 회원가입 ─────────────────────────────────────────────────────────────

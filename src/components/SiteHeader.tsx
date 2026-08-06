@@ -30,7 +30,8 @@ export default async function SiteHeader() {
 
         <nav className="nav" aria-label="주요 메뉴">
           <NavLink href="/analyze">공고 분석</NavLink>
-          <NavLink href="/history">내 기록</NavLink>
+          {/* 하위 주소는 /profile 이 정한다 — 헤더는 진입점만 안다 */}
+          <NavLink href="/profile">프로필</NavLink>
 
           <ThemeToggle />
 

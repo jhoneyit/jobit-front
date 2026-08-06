@@ -109,7 +109,7 @@ export default async function ResultPage({ params }: PageProps) {
       </section>
 
       <p className="footnote">
-        이 공고는 <Link href="/history">내 기록</Link>에 저장돼 있어 나중에 다시 열어볼 수 있습니다.
+        이 공고는 <Link href="/profile/history">내 기록</Link>에 저장돼 있어 나중에 다시 열어볼 수 있습니다.
         아직 충족 근거가 없는 요구사항을 확인하려면 이력서 갭 분석(3단계)이 필요합니다.
       </p>
     </>

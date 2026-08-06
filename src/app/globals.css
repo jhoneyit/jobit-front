@@ -1074,6 +1074,124 @@ button.secondary {
   text-underline-offset: 3px;
 }
 
+/* ── 프로필 (왼쪽 메뉴 + 본문) ───────────────────────────── */
+
+/*
+ * 넓은 화면에서는 왼쪽 메뉴, 좁은 화면에서는 위쪽 가로 탭.
+ *
+ * 본문 칸은 `minmax(0, 1fr)` 이다. 기본 `1fr` 은 `minmax(auto, 1fr)` 이라
+ * 칸이 내용의 최소 너비 아래로 줄지 않아, 안쪽에 긴 공고 제목이 하나만
+ * 들어와도 칸이 넓어지며 격자가 껍데기를 밀어낸다.
+ */
+.pf-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 22px;
+  /* .hero 의 h1 이 위쪽 여백을 가지므로 여기서 더 주지 않는다 */
+  margin-top: 8px;
+}
+
+@media (min-width: 760px) {
+  .pf-shell {
+    grid-template-columns: 190px minmax(0, 1fr);
+    gap: 36px;
+    align-items: start;
+  }
+}
+
+.pf-nav {
+  display: flex;
+  /* 좁을 때는 가로로 흐르고 넘치면 옆으로 민다 — 탭이 두 줄로 접히면
+     본문 시작 위치가 페이지마다 달라 보인다. */
+  flex-direction: row;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--border);
+}
+
+.pf-nav::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 760px) {
+  .pf-nav {
+    flex-direction: column;
+    gap: 2px;
+    overflow: visible;
+    padding-bottom: 0;
+    border-bottom: none;
+    /* 헤더가 sticky 라 그 아래에 붙여 둔다 — 기록이 길어도 메뉴가 따라온다 */
+    position: sticky;
+    top: 76px;
+  }
+}
+
+.pf-nav-item {
+  display: block;
+  flex: none;
+  padding: 9px 12px;
+  border-radius: var(--radius);
+  color: var(--fg-muted);
+  text-decoration: none;
+  /* 좁은 화면의 탭에서는 밑줄 표시를 쓰므로 아래 모서리를 살려 둔다 */
+  border-bottom: 2px solid transparent;
+  transition: background 0.16s ease, color 0.16s ease;
+}
+
+.pf-nav-item:hover {
+  background: var(--bg-subtle);
+  color: var(--fg);
+}
+
+.pf-nav-item[data-active="true"] {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+@media (min-width: 760px) {
+  .pf-nav-item {
+    border-bottom: none;
+  }
+
+  .pf-nav-item[data-active="true"] {
+    background: var(--accent-soft);
+  }
+}
+
+.pf-nav-label {
+  display: block;
+  font-size: 14.5px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+/* 설명줄은 세로 메뉴에서만 보인다. 가로 탭에서는 탭이 뚱뚱해지기만 한다. */
+.pf-nav-hint {
+  display: none;
+  font-size: 12px;
+  color: var(--fg-subtle);
+  margin-top: 2px;
+  line-height: 1.5;
+}
+
+@media (min-width: 760px) {
+  .pf-nav-hint {
+    display: block;
+  }
+}
+
+.pf-body {
+  min-width: 0;
+}
+
+/* 메뉴가 이미 어느 화면인지 알려 주므로 본문 제목의 여백을 줄인다 */
+.pf-body .hero h1 {
+  margin-bottom: 6px;
+}
+
 /* ── 공고 분석 페이지 팁 ─────────────────────────────────── */
 
 .tips {
@@ -1128,7 +1246,7 @@ button.secondary {
   }
 
   /* 페이지 링크를 숨겨 헤더가 넘치지 않게 한다.
-     "공고 분석"은 히어로 CTA 로, "내 기록"은 계정 메뉴로 들어갈 수 있다. */
+     "공고 분석"은 히어로 CTA 로, "프로필"은 계정 메뉴(비로그인이면 푸터)로 들어갈 수 있다. */
   .nav > .nav-link {
     display: none;
   }
