@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import QuestionCard from "@/components/QuestionCard";
+import { questionPriority } from "@/lib/profile/match";
+import type { RequirementFit } from "@/lib/profile/types";
 import type { Question, QuestionStreamEvent, Requirement } from "@/lib/types";
 
 type Status = "streaming" | "done" | "error";
@@ -16,14 +18,18 @@ type Status = "streaming" | "done" | "error";
 export default function QuestionStream({
   jobPostingId,
   requirements,
+  fits,
 }: {
   jobPostingId: string;
   requirements: Requirement[];
+  /** 요구사항 id → 내 보유 스택과의 관계. 프로필이 없으면 undefined. */
+  fits?: Record<string, RequirementFit>;
 }) {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [status, setStatus] = useState<Status>("streaming");
   const [error, setError] = useState<string | null>(null);
   const [expected, setExpected] = useState(10);
+  const [sorted, setSorted] = useState(false);
 
   /**
    * StrictMode 가 effect 를 두 번 돌려도 요청을 두 번 보내지 않게 막는다.
@@ -122,14 +128,42 @@ export default function QuestionStream({
   const remaining = Math.max(0, expected - questions.length);
   const byId = new Map(requirements.map((r) => [r.id, r]));
 
+  const fitOf = (q: Question) => (q.requirementId ? fits?.[q.requirementId] : undefined);
+
+  /**
+   * **스트리밍 중에는 절대 재정렬하지 않는다.** 질문이 하나씩 도착하는 게 이 제품의 시그니처인데
+   * 도착할 때마다 순서가 바뀌면 읽던 카드가 눈앞에서 옮겨간다. 스트림이 끝나고 사용자가
+   * 직접 켰을 때만 정렬한다.
+   */
+  const canSort = status === "done" && !!fits && questions.length > 1;
+  const shown =
+    canSort && sorted
+      ? [...questions].sort((a, b) => questionPriority(fitOf(a)) - questionPriority(fitOf(b)))
+      : questions;
+
   return (
     <div className="q-list">
-      {questions.map((q, i) => (
+      {canSort && (
+        <div className="q-sort">
+          <label className="q-sort-toggle">
+            <input
+              type="checkbox"
+              checked={sorted}
+              onChange={(e) => setSorted(e.target.checked)}
+            />
+            내 경력 기준으로 정렬
+          </label>
+          <span className="hint">근거를 준비해야 할 질문이 위로 옵니다</span>
+        </div>
+      )}
+
+      {shown.map((q, i) => (
         <QuestionCard
           key={q.id}
           question={q}
           index={i}
           requirement={q.requirementId ? (byId.get(q.requirementId) ?? null) : null}
+          fit={fitOf(q)}
         />
       ))}
 

@@ -9,6 +9,7 @@ import ProfileNav, { type ProfileNavItem } from "@/components/ProfileNav";
  * 여기서 한 번에 막으면 익명 기록을 볼 길이 사라진다.
  */
 const ITEMS: readonly ProfileNavItem[] = [
+  { href: "/profile/me", label: "내 정보", hint: "내 경력과 기술" },
   { href: "/profile/history", label: "내 기록", hint: "넣은 공고와 만든 질문" },
   { href: "/profile/settings", label: "내 설정", hint: "계정과 비밀번호" },
 ];

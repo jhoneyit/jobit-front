@@ -253,3 +253,25 @@ export const llmCallLogs = pgTable(
   },
   (t) => [index("llm_call_log_created_idx").on(t.createdAt)],
 );
+
+// ─── 내 정보 (프로필) ─────────────────────────────────────────────────────
+
+/**
+ * 공고가 알 수 없는 지원자 본인의 정보 (Flyway V8).
+ *
+ * 소유자당 한 행이라 `owner_key` 가 곧 PK 다. 파싱이 뽑아내는 건 전부 "공고가 원하는 것"이고,
+ * "내가 실제로 다뤄본 것"은 여기에만 있다 — 이 둘이 있어야 교집합/차집합이 나온다.
+ *
+ * **질문 생성 프롬프트에는 넣지 않는다.** 넣으면 `question_set` 캐시 키에 프로필이 붙어
+ * 인기 공고도 사용자마다 재생성된다. 이 값은 이미 만들어진 질문을 정렬·강조하는
+ * 표시 단계에서만 쓴다 (`lib/profile/match.ts`).
+ */
+export const userProfiles = pgTable("user_profile", {
+  ownerKey: varchar("owner_key", { length: 255 }).primaryKey(),
+  /** 미입력이면 null. 0(신입)과 구분해야 하므로 기본값을 두지 않는다. */
+  yearsOfExp: smallint("years_of_exp"),
+  /** 사용자가 적은 표기 그대로. 정규화·별칭 해석은 읽는 쪽(match.ts)이 한다. */
+  stacks: jsonb("stacks").$type<string[]>().notNull().default([]),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
