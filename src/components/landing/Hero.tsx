@@ -11,6 +11,9 @@ const EASE = [0.16, 1, 0.3, 1] as const;
 /** 튕기지 않고 감기듯 멎는 값. 패널이 출렁이면 장난스러워 보인다. */
 const SPRING = { type: "spring", stiffness: 260, damping: 30, mass: 0.9 } as const;
 
+/** 로그인 후에는 붙여넣으러 온 자리(/analyze)로 되돌려준다. */
+const SIGNIN_HREF = `/signin?callbackUrl=${encodeURIComponent("/analyze")}`;
+
 /**
  * 히어로.
  *
@@ -24,8 +27,11 @@ const SPRING = { type: "spring", stiffness: 260, damping: 30, mass: 0.9 } as con
  *
  * 접힌 상태는 여전히 /analyze 로 가는 **진짜 링크**다. JS 가 죽었거나
  * 새 탭으로 여는 클릭이면 그대로 이동해서 같은 일을 할 수 있어야 한다.
+ *
+ * **로그인 전에는 펼치지 않고 /signin 으로 보낸다.** 이때 클릭을 가로채지 않고
+ * 링크의 href 자체를 바꾸는 이유는 위와 같다 — 새 탭·JS 없음에서도 같은 곳으로 가야 한다.
  */
-export default function Hero() {
+export default function Hero({ signedIn }: { signedIn: boolean }) {
   const reduced = useReducedMotion();
   const [open, setOpen] = useState(false);
   const taRef = useRef<HTMLTextAreaElement>(null);
@@ -99,6 +105,8 @@ export default function Hero() {
   }, [collapsible]);
 
   function handleTrigger(e: MouseEvent<HTMLAnchorElement>) {
+    // 로그인 전이면 펼칠 게 없다. 링크가 가리키는 /signin 으로 그대로 보낸다.
+    if (!signedIn) return;
     // 새 탭·새 창으로 열려는 클릭은 가로채지 않는다.
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
     e.preventDefault();
@@ -148,10 +156,11 @@ export default function Hero() {
                 폼은 절대 배치라 높이에 끼어들지 않고 같은 자리에 겹친다. */}
             <div className="hero-compose-layer" ref={triggerRef} inert={open}>
               <Link
-                href="/analyze"
+                href={signedIn ? "/analyze" : SIGNIN_HREF}
                 className="hero-compose-trigger"
                 onClick={handleTrigger}
-                aria-expanded={open}
+                // 로그인 전에는 펼쳐지지 않으므로 펼칠 수 있다고 알리지 않는다.
+                aria-expanded={signedIn ? open : undefined}
               >
                 <span className="hero-compose-text">여기에 채용공고를 붙여넣으세요</span>
                 <span className="hero-compose-btn" aria-hidden="true">

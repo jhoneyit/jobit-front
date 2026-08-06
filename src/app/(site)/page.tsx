@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { auth } from "@/auth";
 import Hero from "@/components/landing/Hero";
 import HeroDemo from "@/components/landing/HeroDemo";
 import Reveal from "@/components/landing/Reveal";
@@ -11,11 +12,17 @@ import Reveal from "@/components/landing/Reveal";
  * 구조는 취업 서비스 홈의 일반적인 흐름을 참고했다 —
  * 훑어보고 바로 누르는 화면이지 브랜드 필름이 아니다.
  * 다만 색·시그니처 요소는 우리 로고에서 가져온다: 스카이블루(주) + 코랄(보조).
+ *
+ * 히어로의 입력판은 로그인 여부로 갈리므로 여기서 세션을 읽어 넘긴다 —
+ * `SessionProvider` 를 쓰지 않는 구성이라 클라이언트에서는 알 방법이 없다.
+ * 이 트리는 레이아웃의 `SiteHeader` 가 이미 `auth()` 를 부르므로 원래 동적이다.
  */
-export default function HomePage() {
+export default async function HomePage() {
+  const session = await auth();
+
   return (
     <>
-      <Hero />
+      <Hero signedIn={Boolean(session?.user)} />
 
       {/* ── 실제 결과 ────────────────────────────────────────────── */}
       <section className="lp-sec" aria-labelledby="sample">
