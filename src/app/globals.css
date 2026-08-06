@@ -1744,6 +1744,275 @@ button.secondary {
   padding: 20px;
 }
 
+/*
+ * 데모 본체 (HeroDemo).
+ *
+ * 두 판(붙여넣기 → 결과) 사이에 화살표를 두는 3칸 격자다. 좁아지면 세로로
+ * 쌓고 화살표를 아래로 돌린다.
+ *
+ * **격자 칸에 `minmax(0, 1fr)` 를 쓰는 게 핵심이다.** 기본값인 `1fr` 은
+ * `minmax(auto, 1fr)` 이라 칸이 내용의 최소 너비 아래로 줄지 않는다 — 안쪽에
+ * 줄바꿈 안 되는 긴 줄이 하나라도 있으면 칸이 그만큼 넓어져 프레임을 뚫는다.
+ */
+.demo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+@media (min-width: 780px) {
+  .demo {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: 16px;
+    align-items: stretch;
+  }
+}
+
+.demo-pane {
+  /* 격자 칸과 같은 이유로 필요하다. 이게 없으면 pane 안의 긴 줄이 칸을 밀어낸다. */
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-raised);
+  padding: 12px 14px 14px;
+}
+
+.demo-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 10px;
+  margin-bottom: 11px;
+  border-bottom: 1px solid var(--border);
+}
+
+.demo-dots {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.demo-dots i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--border-strong);
+}
+
+.demo-label {
+  font-size: 11.5px;
+  font-weight: 650;
+  color: var(--fg-subtle);
+  letter-spacing: 0.01em;
+  /* 라벨은 단계마다 길이가 달라진다. 길어져도 판을 넓히지 않고 잘라낸다. */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 생성 중임을 알리는 점. 본문 `.dot` 과 같은 pulse 를 쓴다. */
+.demo-live {
+  flex: none;
+  margin-left: auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+/*
+ * 붙여넣은 공고.
+ *
+ * `.demo-line` 이 **블록이어야 한다.** 마크업은 줄마다 <span> 을 넣고 줄바꿈
+ * 문자는 넣지 않는다 — 인라인으로 두면 열 줄이 한 줄로 이어붙고, <pre> 의
+ * `white-space: pre` 는 그 줄을 접지 않아 그대로 바깥으로 흘러나간다.
+ * 여기가 프레임을 벗어나던 원인이다.
+ */
+.demo-jd {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.75;
+  color: var(--fg-muted);
+  /* 그래도 한 줄이 칸보다 길면 잘라내지 말고 접는다. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  /* 타이핑되는 동안 판 높이가 자라며 아래를 밀지 않도록 자리를 미리 잡는다 */
+  min-height: 218px;
+}
+
+.demo-line {
+  display: block;
+}
+
+.demo-caret {
+  display: inline-block;
+  width: 6px;
+  height: 13px;
+  vertical-align: -2px;
+  background: var(--accent);
+  animation: demo-caret 1s steps(2, start) infinite;
+}
+
+@keyframes demo-caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* 좁을 때는 아래를 가리키고, 넓어지면 오른쪽 판을 가리킨다 */
+.demo-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-subtle);
+  opacity: 0.35;
+  transform: rotate(90deg);
+  transition: opacity 0.3s ease, color 0.3s ease;
+}
+
+.demo-arrow[data-active="true"] {
+  opacity: 1;
+  color: var(--accent);
+}
+
+@media (min-width: 780px) {
+  .demo-arrow {
+    transform: none;
+  }
+}
+
+.demo-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  /* 칩이 한 줄에서 두 줄로 넘어갈 때 아래가 출렁이지 않게 두 줄을 잡아 둔다 */
+  min-height: 54px;
+  align-content: flex-start;
+}
+
+.demo-chip {
+  font-size: 11.5px;
+  font-weight: 650;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  /* 요구사항 문구는 임의 길이다. 칩이 판보다 넓어지지 않게 접어 준다. */
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.demo-chip[data-kind="PREFERRED"] {
+  background: var(--coral-soft);
+  color: var(--coral-ink);
+}
+
+.demo-qs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 11px;
+  min-width: 0;
+}
+
+.demo-q {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-subtle);
+  padding: 10px 12px;
+  min-width: 0;
+  animation: rise 0.32s ease both;
+}
+
+.demo-q-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.demo-q-tag {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--coral-soft);
+  color: var(--coral-ink);
+}
+
+.demo-q-level {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+  margin-left: auto;
+}
+
+.demo-q-level i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--border-strong);
+}
+
+.demo-q-level i[data-on="true"] {
+  background: var(--coral);
+}
+
+.demo-q-text {
+  margin: 0 0 5px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.55;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+
+.demo-q-from {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--fg-subtle);
+  overflow-wrap: anywhere;
+}
+
+.demo-skel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.demo-skel span {
+  height: 9px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--bg-subtle) 25%,
+    var(--border) 50%,
+    var(--bg-subtle) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s linear infinite;
+}
+
+.demo-skel span:last-child {
+  width: 62%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .demo-live,
+  .demo-caret,
+  .demo-q,
+  .demo-skel span {
+    animation: none;
+  }
+}
+
 /* ── 다음 단계 카드 ─────────────────────────────────────── */
 
 .next-card {
