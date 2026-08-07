@@ -156,6 +156,22 @@ export async function listInterviews(
   return body.items;
 }
 
+/**
+ * 기록 하나를 지운다.
+ *
+ * 답변은 함께 지워지고 **질문·공고는 남는다** — 둘 다 공유 자산이고, 특히 공고는
+ * `content_hash` 전역 캐시라 지우면 남의 캐시 적중까지 깨진다. 그 규칙은 백엔드가 지킨다.
+ */
+export async function deleteInterview(
+  ownerKey: string,
+  sessionId: string,
+): Promise<void> {
+  await backendFetch(`/api/interviews/${sessionId}`, {
+    method: "DELETE",
+    ownerKey,
+  });
+}
+
 /** 익명으로 쌓은 연습 기록을 계정으로 옮긴다. @returns 옮겨진 세션 수 */
 export async function claimInterviews(
   anonOwnerKey: string,

@@ -366,8 +366,11 @@ function Summary({ result }: { result: FinishedInterview }) {
         )}
       </p>
       <div className="iv-actions">
-        {/* TODO(면접 기록): /profile/interviews 가 생기면 "내 기록 보기"를 주 버튼으로 둔다. */}
-        <Link href="/interview" className="btn-primary">
+        {/* 방금 무엇을 놓쳤는지 문항별로 되짚는 것이 다음 행동이다 */}
+        <Link href={`/profile/interviews/${result.sessionId}`} className="btn-primary">
+          문항별로 되짚어 보기
+        </Link>
+        <Link href="/interview" className="iv-skip">
           다른 공고로 연습하기
         </Link>
       </div>

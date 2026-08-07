@@ -3000,3 +3000,151 @@ main:not(:has(> .hero-band)) {
   text-align: right;
   line-height: 1.5;
 }
+
+/* ── 면접 기록 (/profile/interviews) ─────────────────────── */
+
+/*
+ * 목록에서 점수를 한눈에. 숫자만 나열하면 잘한 연습과 못한 연습이 구분되지 않는다.
+ * data-tier="none" 은 아직 끝내지 않은 연습이다 — 0점과 다르다.
+ */
+.iv-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid transparent;
+}
+
+.iv-badge[data-tier="high"] {
+  color: var(--ok);
+  background: color-mix(in srgb, var(--ok) 12%, transparent);
+}
+
+.iv-badge[data-tier="mid"] {
+  color: var(--warn);
+  background: color-mix(in srgb, var(--warn) 14%, transparent);
+}
+
+.iv-badge[data-tier="low"] {
+  color: var(--fg-muted);
+  background: var(--bg-subtle);
+}
+
+.iv-badge[data-tier="none"] {
+  color: var(--fg-subtle);
+  background: transparent;
+  border-color: var(--border);
+}
+
+.iv-resume {
+  font-size: 13px;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.iv-resume:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ── 기록 상세 ── */
+
+.iv-detail-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+  color: var(--fg-muted);
+}
+
+.iv-detail-meta {
+  font-size: 13.5px;
+  color: var(--fg-subtle);
+  margin-left: 4px;
+}
+
+.iv-detail-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/*
+ * 문항 하나가 한 카드다. 뼈대 대조가 본체라 카드 안에서 가장 넓은 자리를 준다 —
+ * 점수는 머리에 작게, 놓친 항목은 아래에 길게.
+ */
+.iv-detail-item {
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.iv-detail-score {
+  margin-left: auto;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.iv-detail-score strong[data-tier="high"] { color: var(--ok); }
+.iv-detail-score strong[data-tier="mid"]  { color: var(--warn); }
+.iv-detail-score strong[data-tier="low"]  { color: var(--fg-muted); }
+
+.iv-detail-question {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.6;
+  letter-spacing: -0.01em;
+}
+
+/* 원문은 접어 둔다 — 되짚을 때 먼저 볼 것은 뼈대 대조이지 내가 한 말이 아니다. */
+.iv-detail-transcript-wrap > summary {
+  font-size: 13px;
+  color: var(--fg-subtle);
+  cursor: pointer;
+  list-style: none;
+}
+
+.iv-detail-transcript-wrap > summary::-webkit-details-marker {
+  display: none;
+}
+
+.iv-detail-transcript-wrap > summary::before {
+  content: "▸ ";
+}
+
+.iv-detail-transcript-wrap[open] > summary::before {
+  content: "▾ ";
+}
+
+.iv-detail-transcript {
+  margin: 10px 0 0;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--bg-subtle);
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--fg-muted);
+  white-space: pre-wrap;
+}
+
+/* 답하지 못했거나 보관 기간이 지난 경우 — 사용자에게 전혀 다른 사실이라 문구로 가른다. */
+.iv-detail-transcript[data-empty="true"] {
+  margin: 0;
+  background: none;
+  padding: 0;
+  font-size: 13px;
+  color: var(--fg-subtle);
+  font-style: italic;
+}

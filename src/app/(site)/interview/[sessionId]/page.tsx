@@ -42,8 +42,13 @@ export default async function InterviewSessionPage({
   }
 
   if (detail.finishedAt) {
-    // TODO(면접 기록): /profile/interviews/{id} 가 생기면 그 결과 화면으로 보낸다.
-    return <NotAvailable message="이미 마친 연습입니다." />;
+    return (
+      <NotAvailable
+        message="이미 마친 연습입니다."
+        href={`/profile/interviews/${sessionId}`}
+        label="결과 보기 →"
+      />
+    );
   }
 
   if (detail.questions.length === 0) {
