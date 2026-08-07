@@ -39,11 +39,11 @@ export default function SubmissionRow({ item }: { item: SubmissionListItem }) {
             )}
           </span>
           <span aria-hidden="true">·</span>
-          <time dateTime={item.submittedAt}>{formatDate(item.submittedAt)}</time>
+          <time dateTime={item.updatedAt}>{formatDate(item.updatedAt)}</time>
         </p>
       </div>
 
-      <DeleteSubmissionButton jobPostingId={item.jobPostingId} label={heading} />
+      <DeleteSubmissionButton submissionId={item.submissionId} label={heading} />
     </li>
   );
 }

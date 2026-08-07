@@ -71,13 +71,14 @@ export async function backendFetch(
 /**
  * 백엔드의 오류 문구를 꺼낸다.
  *
- * `ApiExceptionHandler` 가 `{ "message": ... }` 형태로 내려주지만, 프록시나 게이트웨이가
- * 끼어들면 JSON 이 아닐 수 있다. 그때 본문을 그대로 노출하면 스택트레이스가 화면에 뜬다.
+ * `ApiExceptionHandler` 는 `{ "error": ... }` 하나로 통일해 내려준다 (`jobit/docs/api.md`).
+ * `message` 도 함께 보는 것은 방어용이다 — 프록시나 게이트웨이가 끼어들면 형태가 달라진다.
+ * JSON 이 아닐 때 본문을 그대로 노출하면 스택트레이스가 화면에 뜨므로 기본 문구로 떨어뜨린다.
  */
 async function errorMessage(res: Response): Promise<string> {
   try {
     const body = (await res.json()) as { message?: unknown; error?: unknown };
-    const msg = body.message ?? body.error;
+    const msg = body.error ?? body.message;
     if (typeof msg === "string" && msg.trim()) return msg;
   } catch {
     // JSON 이 아니면 아래 기본 문구로 떨어진다.

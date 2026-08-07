@@ -1,6 +1,6 @@
 import { anonOwnerKey, readAnonSessionId, userOwnerKey } from "@/lib/owner";
 import { claimAnonProfile } from "@/lib/profile/store";
-import { claimAnonSubmissions } from "@/lib/store";
+import { claimSubmissions } from "@/lib/submissions";
 
 /**
  * 로그인 전에 익명으로 쌓아 둔 제출 이력을 계정으로 옮긴다.
@@ -17,7 +17,7 @@ export async function claimAnonymousHistory(sessionUserId: string): Promise<numb
   if (!anon) return 0;
 
   try {
-    return await claimAnonSubmissions(anonOwnerKey(anon), userOwnerKey(sessionUserId));
+    return await claimSubmissions(anonOwnerKey(anon), userOwnerKey(sessionUserId));
   } catch (err) {
     // 승계에 실패해도 로그인과 목록 조회 자체는 되어야 한다.
     console.error("[auth] 익명 기록 승계 실패:", err);
