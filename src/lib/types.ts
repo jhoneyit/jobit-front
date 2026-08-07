@@ -107,12 +107,18 @@ export interface LlmCallLog {
  * 제출 이력(jd_submission)이 "누가 언제 넣었는지"를 들고 있다. 목록 화면은 후자를 읽는다.
  */
 export interface SubmissionListItem {
+  /**
+   * 삭제 대상 식별자. **jobPostingId 로는 한 줄을 지목할 수 없다** — 같은 공고를 여러 사람이
+   * 갖고 있어서, 소유자까지 함께 봐야 줄이 정해진다.
+   */
+  submissionId: string;
   jobPostingId: string;
   company: string | null;
   title: string | null;
   stack: string[];
   domain: string | null;
-  submittedAt: string;
+  /** 제출 시각이 아니라 **마지막으로 넣은 시각**. 같은 공고를 다시 넣으면 이 값만 갱신된다 */
+  updatedAt: string;
   requirementCount: number;
   /** 질문이 아직 생성되지 않았으면 0 */
   questionCount: number;

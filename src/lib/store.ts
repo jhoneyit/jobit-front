@@ -1,7 +1,6 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
-  jdSubmissions,
   jobPostings,
   questions as questionsTable,
   questionSets,
@@ -12,7 +11,6 @@ import type {
   Question,
   QuestionSet,
   Requirement,
-  SubmissionListItem,
 } from "@/lib/types";
 
 /**
@@ -120,130 +118,14 @@ export async function getRequirements(
   return rows.map(toRequirement);
 }
 
-// ─── 제출 이력 (회원별 조회의 근거) ───────────────────────────────────────
-
-/**
- * "이 사람이 이 공고를 넣었다"를 기록한다.
- * 같은 사람이 같은 공고를 다시 넣으면 새 줄을 만들지 않고 시각만 갱신한다 —
- * 목록에 같은 공고가 여러 번 뜨는 게 더 불편하다.
- */
-export async function recordSubmission(
-  ownerKey: string,
-  jobPostingId: string,
-): Promise<void> {
-  await db
-    .insert(jdSubmissions)
-    .values({ ownerKey, jobPostingId })
-    .onConflictDoUpdate({
-      target: [jdSubmissions.ownerKey, jdSubmissions.jobPostingId],
-      set: { createdAt: sql`now()` },
-    });
-}
-
-/** 내 기록 목록. 질문 생성 여부까지 한 번에 가져온다 (N+1 방지). */
-export async function listSubmissions(
-  ownerKey: string,
-  limit = 50,
-): Promise<SubmissionListItem[]> {
-  const rows = await db
-    .select({
-      jobPostingId: jobPostings.id,
-      company: jobPostings.company,
-      title: jobPostings.title,
-      parsed: jobPostings.parsed,
-      submittedAt: jdSubmissions.createdAt,
-      requirementCount: sql<number>`(
-        select count(*) from ${requirementsTable}
-        where ${requirementsTable.jobPostingId} = ${jobPostings.id}
-      )`.mapWith(Number),
-      questionCount: sql<number>`(
-        select count(*) from ${questionsTable}
-        join ${questionSets} on ${questionSets.id} = ${questionsTable.questionSetId}
-        where ${questionSets.jobPostingId} = ${jobPostings.id}
-      )`.mapWith(Number),
-    })
-    .from(jdSubmissions)
-    .innerJoin(jobPostings, eq(jobPostings.id, jdSubmissions.jobPostingId))
-    .where(eq(jdSubmissions.ownerKey, ownerKey))
-    .orderBy(desc(jdSubmissions.createdAt))
-    .limit(limit);
-
-  return rows.map((r) => ({
-    jobPostingId: r.jobPostingId,
-    company: r.company,
-    title: r.title,
-    stack: r.parsed.stack ?? [],
-    domain: r.parsed.domain,
-    submittedAt: r.submittedAt.toISOString(),
-    requirementCount: r.requirementCount,
-    questionCount: r.questionCount,
-  }));
-}
-
-/** 이 공고가 내 기록에 있는지 — 결과 페이지 접근 판정용. */
-export async function ownsSubmission(
-  ownerKey: string,
-  jobPostingId: string,
-): Promise<boolean> {
-  const [row] = await db
-    .select({ id: jdSubmissions.id })
-    .from(jdSubmissions)
-    .where(
-      and(
-        eq(jdSubmissions.ownerKey, ownerKey),
-        eq(jdSubmissions.jobPostingId, jobPostingId),
-      ),
-    )
-    .limit(1);
-  return Boolean(row);
-}
-
-export async function deleteSubmission(
-  ownerKey: string,
-  jobPostingId: string,
-): Promise<void> {
-  await db
-    .delete(jdSubmissions)
-    .where(
-      and(
-        eq(jdSubmissions.ownerKey, ownerKey),
-        eq(jdSubmissions.jobPostingId, jobPostingId),
-      ),
-    );
-}
-
-/**
- * 로그인 전에 익명으로 쌓아 둔 기록을 계정으로 승계한다.
- *
- * 이게 없으면 "질문 만들어 보고 마음에 들어서 로그인했더니 방금 만든 게 사라진" 상태가 된다.
- * 이미 계정에 같은 공고가 있으면 익명 쪽 줄은 그냥 버린다 (unique 충돌).
- * 반환값은 실제로 옮겨진 개수.
- */
-export async function claimAnonSubmissions(
-  anonKey: string,
-  userKey: string,
-): Promise<number> {
-  const moved = await db
-    .update(jdSubmissions)
-    .set({ ownerKey: userKey })
-    .where(
-      and(
-        eq(jdSubmissions.ownerKey, anonKey),
-        // 계정에 이미 있는 공고는 건드리지 않는다 — unique 제약에 걸린다
-        sql`not exists (
-          select 1 from ${jdSubmissions} existing
-          where existing.owner_key = ${userKey}
-            and existing.job_posting_id = ${jdSubmissions.jobPostingId}
-        )`,
-      ),
-    )
-    .returning({ id: jdSubmissions.id });
-
-  // 옮기지 못한 (= 계정에 이미 있던) 익명 줄은 정리한다
-  await db.delete(jdSubmissions).where(eq(jdSubmissions.ownerKey, anonKey));
-
-  return moved.length;
-}
+// ─── 제출 이력 ────────────────────────────────────────────────────────────
+//
+// 여기 있었다. 2026-08-07 에 `jobit` 백엔드로 옮겼다 — `@/lib/submissions` 참고.
+// 같은 테이블을 두 레포가 각자 다루면 규칙이 조용히 갈라진다. 실제로 승계 규칙이 갈라져
+// 있었다: 이쪽은 남은 익명 줄을 전부 지웠고, 저쪽은 충돌한 줄만 지운다.
+//
+// 관리자 콘솔은 `@/lib/admin/queries` 로 여전히 DB 를 직접 읽는다. 운영용 화면이라
+// 사용자 경로와 요구가 다르고(전체 조회), 아직 백엔드에 대응 엔드포인트가 없다.
 
 // ─── 질문 ─────────────────────────────────────────────────────────────────
 

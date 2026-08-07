@@ -1,6 +1,7 @@
+import { claimInterviews } from "@/lib/interviews";
 import { anonOwnerKey, readAnonSessionId, userOwnerKey } from "@/lib/owner";
 import { claimAnonProfile } from "@/lib/profile/store";
-import { claimAnonSubmissions } from "@/lib/store";
+import { claimSubmissions } from "@/lib/submissions";
 
 /**
  * 로그인 전에 익명으로 쌓아 둔 제출 이력을 계정으로 옮긴다.
@@ -17,10 +18,34 @@ export async function claimAnonymousHistory(sessionUserId: string): Promise<numb
   if (!anon) return 0;
 
   try {
-    return await claimAnonSubmissions(anonOwnerKey(anon), userOwnerKey(sessionUserId));
+    return await claimSubmissions(anonOwnerKey(anon), userOwnerKey(sessionUserId));
   } catch (err) {
     // 승계에 실패해도 로그인과 목록 조회 자체는 되어야 한다.
     console.error("[auth] 익명 기록 승계 실패:", err);
+    return 0;
+  }
+}
+
+/**
+ * 로그인 전에 익명으로 연습한 면접 기록을 계정으로 옮긴다.
+ *
+ * **제출 이력과 따로 도는 이유**는 프로필과 같다 — 이력 승계는 `/profile/history` 진입 때
+ * 일어나는데, 면접 기록은 `/profile/interviews` 로 바로 들어온 사람도 옮겨져야 한다.
+ * 백엔드도 자원별로 엔드포인트가 나뉘어 있다 (`/api/interviews/claim`).
+ *
+ * 이력 승계와 같은 이유로 Server Action 이 아니고, userId 를 인자로 받지 않는다.
+ *
+ * @returns 옮겨진 세션 수
+ */
+export async function claimAnonymousInterviews(sessionUserId: string): Promise<number> {
+  const anon = await readAnonSessionId();
+  if (!anon) return 0;
+
+  try {
+    return await claimInterviews(anonOwnerKey(anon), userOwnerKey(sessionUserId));
+  } catch (err) {
+    // 승계에 실패해도 로그인과 목록 조회 자체는 되어야 한다.
+    console.error("[auth] 익명 면접 기록 승계 실패:", err);
     return 0;
   }
 }
