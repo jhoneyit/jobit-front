@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import GapSection from "@/components/GapSection";
 import QuestionStream from "@/components/QuestionStream";
 import RequirementList from "@/components/RequirementList";
+import { getGapAnalysis, type GapAnalysis } from "@/lib/gap";
+import { currentOwner } from "@/lib/owner";
 import { matchProfile } from "@/lib/profile/match";
 import { readMyProfile } from "@/lib/profile/session";
 import { isProfileEmpty, type ProfileFit } from "@/lib/profile/types";
+import { listResumes, type ResumeSummary } from "@/lib/resumes";
 import { getJobPosting, getRequirements } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +40,23 @@ export default async function ResultPage({ params }: PageProps) {
     getRequirements(id),
     readMyProfile(),
   ]);
+
+  // 갭 분석 초기 상태 — 가장 최근 이력서와 캐시된 결과(있으면). 실패해도 이 화면의
+  // 나머지(질문·요구사항)는 온전해야 하므로 조용히 비운다.
+  let gapResume: ResumeSummary | null = null;
+  let gapInitial: GapAnalysis | null = null;
+  const owner = await currentOwner();
+  if (owner) {
+    try {
+      const resumes = await listResumes(owner.key);
+      gapResume = resumes[0] ?? null; // 최신 먼저 — gapSummary 와 같은 "최근 하나" 규약
+      if (gapResume) {
+        gapInitial = await getGapAnalysis(owner.key, gapResume.resumeId, id);
+      }
+    } catch (err) {
+      console.error("[result] 갭 분석 초기 상태를 불러오지 못했습니다:", err);
+    }
+  }
 
   if (!posting) {
     return (
@@ -112,7 +133,17 @@ export default async function ResultPage({ params }: PageProps) {
         <RequirementList requirements={requirements} fits={fit?.byRequirement} />
       </section>
 
-      <section className="section">
+      <GapSection
+        jobPostingId={id}
+        resume={
+          gapResume
+            ? { resumeId: gapResume.resumeId, bulletCount: gapResume.bulletCount }
+            : null
+        }
+        initial={gapInitial}
+      />
+
+      <section className="section" id="questions">
         <div className="section-head">
           <h2>예상 질문</h2>
           <span className="hint">요구사항에서 파생된 질문과 답변 뼈대</span>
@@ -126,7 +157,6 @@ export default async function ResultPage({ params }: PageProps) {
 
       <p className="footnote">
         이 공고는 <Link href="/profile/history">내 기록</Link>에 저장돼 있어 나중에 다시 열어볼 수 있습니다.
-        아직 충족 근거가 없는 요구사항을 확인하려면 이력서 갭 분석(3단계)이 필요합니다.
       </p>
     </>
   );
