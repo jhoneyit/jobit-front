@@ -11,6 +11,7 @@ import ProfileNav, { type ProfileNavItem } from "@/components/ProfileNav";
 const ITEMS: readonly ProfileNavItem[] = [
   { href: "/profile/me", label: "내 정보", hint: "내 경력과 기술" },
   { href: "/profile/history", label: "내 기록", hint: "넣은 공고와 만든 질문" },
+  { href: "/profile/resumes", label: "내 이력서", hint: "갭 분석에 쓰는 이력서" },
   { href: "/profile/interviews", label: "면접 기록", hint: "연습한 면접과 점수" },
   { href: "/profile/settings", label: "내 설정", hint: "계정과 비밀번호" },
 ];

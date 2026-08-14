@@ -1,6 +1,7 @@
 import { claimInterviews } from "@/lib/interviews";
 import { anonOwnerKey, readAnonSessionId, userOwnerKey } from "@/lib/owner";
 import { claimAnonProfile } from "@/lib/profile/store";
+import { claimResumes } from "@/lib/resumes";
 import { claimSubmissions } from "@/lib/submissions";
 
 /**
@@ -70,5 +71,28 @@ export async function claimAnonymousProfile(sessionUserId: string): Promise<bool
   } catch (err) {
     console.error("[auth] 익명 프로필 승계 실패:", err);
     return false;
+  }
+}
+
+/**
+ * 로그인 전에 익명으로 올린 이력서를 계정으로 옮긴다.
+ *
+ * 다른 승계와 따로 도는 이유도 같다 — `/profile/resumes` 로 바로 들어온 사람도 옮겨져야
+ * 한다. **충돌 처리가 없다**: 같은 사람이 이력서를 여러 개 갖는 것이 정상이라 백엔드에
+ * 유니크 제약 자체가 없다 (`jobit/docs/api.md`).
+ *
+ * 같은 이유로 Server Action 이 아니고, userId 를 인자로 받지 않는다.
+ *
+ * @returns 옮겨진 이력서 수
+ */
+export async function claimAnonymousResumes(sessionUserId: string): Promise<number> {
+  const anon = await readAnonSessionId();
+  if (!anon) return 0;
+
+  try {
+    return await claimResumes(anonOwnerKey(anon), userOwnerKey(sessionUserId));
+  } catch (err) {
+    console.error("[auth] 익명 이력서 승계 실패:", err);
+    return 0;
   }
 }
