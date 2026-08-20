@@ -32,6 +32,8 @@ export default async function SiteHeader() {
           <NavLink href="/analyze">공고 분석</NavLink>
           {/* 분석한 공고가 있어야 성립하므로 공고 분석 바로 다음에 둔다 */}
           <NavLink href="/interview">면접 연습</NavLink>
+
+          <NavLink href="/videos">영상 요약</NavLink>
           {/* 하위 주소는 /profile 이 정한다 — 헤더는 진입점만 안다 */}
           <NavLink href="/profile">프로필</NavLink>
 

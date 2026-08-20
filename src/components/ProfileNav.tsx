@@ -19,11 +19,17 @@ export interface ProfileNavItem {
  * 좁은 화면에서는 CSS 가 이걸 가로 탭으로 눕힌다 (`.pf-nav` 참고).
  * 마크업이 같으므로 링크 순서와 접근성 표시는 두 배치에서 동일하다.
  */
-export default function ProfileNav({ items }: { items: readonly ProfileNavItem[] }) {
+export default function ProfileNav({
+  items,
+  label = "프로필 메뉴",
+}: {
+  items: readonly ProfileNavItem[];
+  label?: string;
+}) {
   const pathname = usePathname();
 
   return (
-    <nav className="pf-nav" aria-label="프로필 메뉴">
+    <nav className="pf-nav" aria-label={label}>
       {items.map((item) => {
         const active = pathname === item.href;
         return (

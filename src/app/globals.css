@@ -3148,3 +3148,41 @@ main:not(:has(> .hero-band)) {
   color: var(--fg-subtle);
   font-style: italic;
 }
+
+/* ─── 영상 요약 3분할 작업 화면 (VideoWorkspace) ─── */
+.vw-shell {
+  display: grid;
+  grid-template-columns: minmax(320px, 5fr) minmax(0, 6fr) minmax(260px, 4fr);
+  gap: 20px;
+  align-items: start;
+  width: 100%;
+}
+.vw-player-sticky { position: sticky; top: 76px; }
+.vw-video { aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: #000; }
+.vw-video iframe { width: 100%; height: 100%; border: 0; display: block; }
+.vw-player-meta { padding: 12px 4px 0; }
+.vw-report { min-width: 0; }
+.vw-frame {
+  display: block; width: 100%; padding: 0; margin: 0 0 8px;
+  border: 1px solid var(--border, #e5e5e5); border-radius: 10px;
+  overflow: hidden; cursor: pointer; background: none;
+}
+.vw-frame img { display: block; width: 100%; max-height: 220px; object-fit: cover; }
+.vw-chat { min-width: 0; }
+.vw-chat-panel {
+  position: sticky; top: 76px;
+  display: flex; flex-direction: column;
+  max-height: calc(100vh - 96px);
+  border: 1px solid var(--border, #e5e5e5); border-radius: 12px; padding: 14px;
+}
+.vw-chat-log { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; min-height: 160px; padding: 4px 2px; }
+.vw-msg { border-radius: 10px; padding: 8px 12px; max-width: 95%; font-size: 0.95em; }
+.vw-msg[data-role="user"] { align-self: flex-end; background: var(--chip-bg, #f0f0f0); }
+.vw-msg[data-role="assistant"] { align-self: flex-start; border: 1px solid var(--border, #e5e5e5); }
+.vw-msg[data-error] { border-color: var(--warn, #c96); }
+.vw-chat-input { display: flex; gap: 8px; margin-top: 10px; }
+.vw-chat-input input { flex: 1; min-width: 0; }
+@media (max-width: 1100px) {
+  .vw-shell { grid-template-columns: 1fr; }
+  .vw-player-sticky, .vw-chat-panel { position: static; max-height: none; }
+}
