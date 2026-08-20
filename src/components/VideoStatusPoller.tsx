@@ -30,7 +30,7 @@ export default function VideoStatusPoller({
         if (!res.ok) return; // 일시 오류는 다음 폴링이 만회한다.
         const body = (await res.json()) as { status: VideoStatus };
         setStatus(body.status);
-        if (body.status === "DONE" || body.status === "FAILED") {
+        if (body.status === "DONE" || body.status === "FAILED" || body.status === "REJECTED") {
           router.refresh();
         }
       } catch {

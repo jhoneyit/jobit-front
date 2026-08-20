@@ -17,6 +17,7 @@ const STATUS_LABEL: Record<VideoSummaryRow["status"], string> = {
   RUNNING: "요약 중",
   DONE: "완료",
   FAILED: "실패",
+  REJECTED: "대상 아님",
 };
 
 export default async function VideosPage() {
@@ -39,7 +40,8 @@ export default async function VideosPage() {
         <h1 style={{ fontSize: 24 }}>영상 요약</h1>
         <p>
           유튜브 영상 주소를 붙여넣으면 자막(없으면 음성 인식)을 읽어{" "}
-          <b>타임스탬프가 달린 보고서</b>로 정리합니다. 이미 요약된 영상은 바로 열립니다.
+          <b>타임스탬프가 달린 보고서</b>로 정리합니다. 면접·취업·개발 학습과 관련된 영상만
+          요약하며, 이미 요약된 영상은 바로 열립니다.
         </p>
       </section>
 

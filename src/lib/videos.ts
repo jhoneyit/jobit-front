@@ -4,10 +4,10 @@ import { backendFetch } from "@/lib/backend";
  * 영상 요약 — `jobit` 백엔드 호출. 계약은 `jobit/docs/api.md` 의 "영상 요약".
  *
  * **처리가 비동기다.** POST 는 접수만 하고, 화면은 GET 으로 폴링한다 —
- * 상태 기계는 PENDING → RUNNING → DONE | FAILED.
+ * 상태 기계는 PENDING → RUNNING → DONE | FAILED | REJECTED(주제 게이트).
  */
 
-export type VideoStatus = "PENDING" | "RUNNING" | "DONE" | "FAILED";
+export type VideoStatus = "PENDING" | "RUNNING" | "DONE" | "FAILED" | "REJECTED";
 
 export interface VideoReportSection {
   heading: string;

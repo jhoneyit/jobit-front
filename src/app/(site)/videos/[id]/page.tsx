@@ -61,6 +61,13 @@ export default async function VideoReportPage({ params }: PageProps) {
 
       {summary.status === "DONE" && summary.report ? (
         <Report summary={summary} />
+      ) : summary.status === "REJECTED" ? (
+        <div className="notice" data-tone="info">
+          <p style={{ margin: "0 0 10px" }}>
+            {summary.errorMessage ?? "면접·취업 준비와 관련된 영상만 요약합니다."}
+          </p>
+          <Link href="/videos">다른 영상 요약하기 →</Link>
+        </div>
       ) : summary.status === "FAILED" ? (
         <div className="notice" data-tone="warn">
           <p style={{ margin: "0 0 10px" }}>{summary.errorMessage ?? "요약에 실패했습니다."}</p>
