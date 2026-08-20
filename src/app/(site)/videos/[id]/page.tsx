@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import VideoStatusPoller from "@/components/VideoStatusPoller";
+import VideoWorkspace from "@/components/VideoWorkspace";
 import { BackendError } from "@/lib/backend";
 import { getVideoSummary, type VideoSummaryDetail } from "@/lib/videos";
 
@@ -44,6 +45,11 @@ export default async function VideoReportPage({ params }: PageProps) {
     );
   }
 
+  // DONE 은 3분할 작업 화면(플레이어·보고서·채팅)이 전부 대신한다 — 전폭 레이아웃.
+  if (summary.status === "DONE" && summary.report) {
+    return <VideoWorkspace summary={summary} />;
+  }
+
   const heading = summary.title ?? "영상 요약";
 
   return (
@@ -52,16 +58,13 @@ export default async function VideoReportPage({ params }: PageProps) {
         <h1 style={{ fontSize: 24 }}>{heading}</h1>
         <p>
           {summary.channel && <>{summary.channel} · </>}
-          {summary.durationSec ? <>{formatDuration(summary.durationSec)} · </> : null}
           <a href={summary.url} target="_blank" rel="noreferrer">
             유튜브에서 보기 ↗
           </a>
         </p>
       </section>
 
-      {summary.status === "DONE" && summary.report ? (
-        <Report summary={summary} />
-      ) : summary.status === "REJECTED" ? (
+      {summary.status === "REJECTED" ? (
         <div className="notice" data-tone="info">
           <p style={{ margin: "0 0 10px" }}>
             {summary.errorMessage ?? "면접·취업 준비와 관련된 영상만 요약합니다."}
@@ -79,84 +82,9 @@ export default async function VideoReportPage({ params }: PageProps) {
       )}
 
       <p className="footnote">
-        이 페이지 주소를 공유하면 누구나 이 보고서를 볼 수 있습니다.{" "}
         <Link href="/videos/history">요약 기록</Link>
       </p>
     </>
   );
 }
 
-function Report({ summary }: { summary: VideoSummaryDetail }) {
-  const report = summary.report!;
-  return (
-    <>
-      <section className="section" style={{ marginTop: 0 }}>
-        <div className="card">
-          <p style={{ margin: 0, fontWeight: 600 }}>{report.oneLine}</p>
-          <p style={{ margin: "10px 0 0" }}>{report.overview}</p>
-          {summary.source === "STT" && (
-            <p className="hint" style={{ margin: "10px 0 0" }}>
-              자막이 없어 음성 인식으로 만든 요약입니다 — 고유명사가 부정확할 수 있습니다.
-            </p>
-          )}
-        </div>
-      </section>
-
-      <section className="section">
-        <div className="section-head">
-          <h2>구간별 정리</h2>
-          <span className="hint">시각을 누르면 유튜브 해당 장면으로 이동합니다</span>
-        </div>
-        <ul className="sub-list">
-          {report.sections.map((section, i) => (
-            <li key={i} className="sub-item" style={{ flexDirection: "column", alignItems: "stretch" }}>
-              <div style={{ display: "flex", gap: 10, alignItems: "baseline", flexWrap: "wrap" }}>
-                {section.startSec != null && (
-                  <a
-                    className="chip"
-                    href={`https://youtu.be/${summary.videoId}?t=${section.startSec}`}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {formatTimestamp(section.startSec)}
-                  </a>
-                )}
-                <span className="sub-title">{section.heading}</span>
-              </div>
-              <p style={{ margin: "6px 0 0" }}>{section.summary}</p>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section className="section">
-        <div className="section-head">
-          <h2>핵심 정리</h2>
-        </div>
-        <div className="card">
-          <ul style={{ margin: 0, paddingLeft: 20 }}>
-            {report.takeaways.map((takeaway, i) => (
-              <li key={i} style={{ margin: "6px 0" }}>
-                {takeaway}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-    </>
-  );
-}
-
-function formatTimestamp(sec: number): string {
-  const h = Math.floor(sec / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  const s = sec % 60;
-  const mm = String(m).padStart(h > 0 ? 2 : 1, "0");
-  const ss = String(s).padStart(2, "0");
-  return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
-}
-
-function formatDuration(sec: number): string {
-  const m = Math.floor(sec / 60);
-  return m > 0 ? `${m}분` : `${sec}초`;
-}

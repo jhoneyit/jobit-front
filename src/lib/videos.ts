@@ -36,6 +36,8 @@ export interface VideoSummaryDetail {
   /** FAILED 일 때만. 그대로 화면에 띄워도 되는 문구다 */
   errorMessage: string | null;
   report: VideoReport | null;
+  /** 캡처가 존재하는 섹션 시각 목록 — 이미지 영역을 그릴지 판단한다 */
+  capturedFrames: number[];
   createdAt: string;
 }
 
@@ -75,6 +77,35 @@ export async function listVideoSummaries(
   const res = await backendFetch("/api/video-summaries", { ownerKey });
   const body = (await res.json()) as { items: VideoSummaryRow[] };
   return body.items;
+}
+
+export interface VideoQnaAnswer {
+  answer: string;
+  /** 답의 근거 시각(초) — 플레이어 시킹 버튼이 된다 */
+  refs: number[];
+}
+
+/** 영상 내용 질문 — 질문 하나가 GPU 추론 하나라 소유자 한도를 소비한다. */
+export async function askVideoQna(
+  ownerKey: string,
+  summaryId: string,
+  question: string,
+  history: string[],
+): Promise<VideoQnaAnswer> {
+  const res = await backendFetch(`/api/video-summaries/${summaryId}/qna`, {
+    method: "POST",
+    ownerKey,
+    body: JSON.stringify({ question, history }),
+  });
+  return (await res.json()) as VideoQnaAnswer;
+}
+
+/** 섹션 캡처 바이트 — 프론트 프록시 라우트가 브라우저 <img> 에 전달한다. */
+export async function fetchVideoFrame(
+  summaryId: string,
+  startSec: number,
+): Promise<Response> {
+  return backendFetch(`/api/video-summaries/${summaryId}/frame/${startSec}`, {});
 }
 
 export async function deleteVideoSubmission(
