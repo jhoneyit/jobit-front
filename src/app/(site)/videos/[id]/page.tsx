@@ -80,7 +80,7 @@ export default async function VideoReportPage({ params }: PageProps) {
 
       <p className="footnote">
         이 페이지 주소를 공유하면 누구나 이 보고서를 볼 수 있습니다.{" "}
-        <Link href="/videos">내 요약 목록</Link>
+        <Link href="/videos/history">요약 기록</Link>
       </p>
     </>
   );
