@@ -74,7 +74,9 @@ export default async function VideoHistoryPage() {
                     {row.channel && <span aria-hidden="true">·</span>}
                     {row.durationSec ? <span>{formatDuration(row.durationSec)}</span> : null}
                     {row.durationSec ? <span aria-hidden="true">·</span> : null}
-                    <span>{STATUS_LABEL[row.status]}</span>
+                    <span className="vw-status" data-status={row.status}>
+                      {STATUS_LABEL[row.status]}
+                    </span>
                   </p>
                 </div>
                 <DeleteVideoButton

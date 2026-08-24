@@ -51,11 +51,13 @@ export default function VideoStatusPoller({
       : "대기열에 있습니다 — 앞선 요약이 끝나면 시작합니다.";
 
   return (
-    <div className="notice" data-tone="info" role="status">
-      <p style={{ margin: 0 }}>
-        <b>{status === "RUNNING" ? "요약 중" : "대기 중"}</b> · {formatElapsed(seconds)} 경과
-      </p>
-      <p className="hint" style={{ margin: "8px 0 0" }}>
+    <div className="vw-progress" role="status">
+      <div className="streaming" style={{ padding: 0 }}>
+        <span className="dot" />
+        <b style={{ color: "var(--fg)" }}>{status === "RUNNING" ? "요약 중" : "대기 중"}</b>
+        <span>· {formatElapsed(seconds)} 경과</span>
+      </div>
+      <p className="hint" style={{ margin: "10px 0 0" }}>
         {label} 이 페이지를 닫아도 처리는 계속되고, 주소로 다시 오면 결과가 있습니다.
       </p>
     </div>
