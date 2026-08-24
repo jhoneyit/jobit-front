@@ -43,17 +43,21 @@ export default function VideoSubmitForm() {
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
         <input
           type="url"
+          className="vw-input"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="https://www.youtube.com/watch?v=..."
           aria-label="유튜브 영상 주소"
           disabled={pending}
-          style={{ flex: 1, minWidth: 240 }}
+          style={{ minWidth: 240 }}
         />
-        <button type="submit" className="cta" disabled={pending || !url.trim()}>
+        <button type="submit" disabled={pending || !url.trim()}>
           {pending ? "접수 중…" : "요약하기"}
         </button>
       </div>
+      <p className="hint" style={{ margin: "10px 0 0" }}>
+        youtu.be·shorts 주소도 됩니다. 자막 영상은 몇 분, 자막 없는 영상은 수십 분 걸립니다.
+      </p>
       {error && (
         <div className="notice" data-tone="warn" style={{ marginTop: 12 }} role="alert">
           {error}

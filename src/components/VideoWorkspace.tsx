@@ -40,18 +40,19 @@ export default function VideoWorkspace({ summary }: { summary: VideoSummaryDetai
               allowFullScreen
             />
           </div>
-          <div className="vw-player-meta">
+          <div className="vw-meta">
             <p className="sub-title" style={{ margin: 0 }}>{summary.title}</p>
-            <p className="hint" style={{ margin: "4px 0 0" }}>
-              {summary.channel}
-              {summary.source === "STT" && " · 음성 인식 기반 요약"}
-              {" · "}
+            <p className="hint" style={{ margin: "6px 0 0", display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              {summary.channel && <span>{summary.channel}</span>}
+              <span className="vw-source" data-source={summary.source ?? "CAPTION"}>
+                {summary.source === "STT" ? "음성 인식" : "자막"}
+              </span>
               <a href={summary.url} target="_blank" rel="noreferrer">유튜브에서 열기 ↗</a>
             </p>
-            <p className="hint" style={{ margin: "8px 0 0" }}>
-              <Link href="/videos">← 영상 요약</Link>
+            <p className="hint" style={{ margin: "10px 0 0" }}>
+              <Link href="/videos" className="cta">← 영상 요약</Link>
               {" · "}
-              <Link href="/videos/history">요약 기록</Link>
+              <Link href="/videos/history" className="cta">요약 기록</Link>
             </p>
           </div>
         </div>
@@ -89,7 +90,7 @@ export default function VideoWorkspace({ summary }: { summary: VideoSummaryDetai
               )}
               <div style={{ display: "flex", gap: 10, alignItems: "baseline", flexWrap: "wrap" }}>
                 {section.startSec != null && (
-                  <button type="button" className="chip" onClick={() => seek(section.startSec!)}>
+                  <button type="button" className="vw-tchip" onClick={() => seek(section.startSec!)}>
                     ▶ {formatTimestamp(section.startSec)}
                   </button>
                 )}
@@ -184,7 +185,7 @@ function QnaPanel({ summaryId, onSeek }: { summaryId: string; onSeek: (sec: numb
             {turn.refs && turn.refs.length > 0 && (
               <div className="chips" style={{ marginTop: 6 }}>
                 {turn.refs.map((sec) => (
-                  <button key={sec} type="button" className="chip" onClick={() => onSeek(sec)}>
+                  <button key={sec} type="button" className="vw-tchip" onClick={() => onSeek(sec)}>
                     ▶ {formatTimestamp(sec)}
                   </button>
                 ))}
@@ -192,11 +193,16 @@ function QnaPanel({ summaryId, onSeek }: { summaryId: string; onSeek: (sec: numb
             )}
           </div>
         ))}
-        {pending && <p className="hint" style={{ margin: 0 }}>답변을 만드는 중…</p>}
+        {pending && (
+          <div className="streaming" role="status">
+            <span className="dot" /> 답변을 만드는 중…
+          </div>
+        )}
       </div>
       <form className="vw-chat-input" onSubmit={ask}>
         <input
           type="text"
+          className="vw-input"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="영상 내용에 대해 질문"
@@ -204,7 +210,7 @@ function QnaPanel({ summaryId, onSeek }: { summaryId: string; onSeek: (sec: numb
           disabled={pending}
           maxLength={500}
         />
-        <button type="submit" className="cta" disabled={pending || !input.trim()}>
+        <button type="submit" disabled={pending || !input.trim()}>
           질문
         </button>
       </form>

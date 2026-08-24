@@ -3149,40 +3149,279 @@ main:not(:has(> .hero-band)) {
   font-style: italic;
 }
 
-/* ─── 영상 요약 3분할 작업 화면 (VideoWorkspace) ─── */
+/* ══════════════════════════════════════════════════════════
+   영상 요약 (videos) — 3분할 작업 화면 · 폼 · 상태
+   전부 사이트 토큰만 쓴다. 하드코딩 색을 넣으면 다크 모드가 깨진다.
+   ══════════════════════════════════════════════════════════ */
+
+/* 본문 셸(820px)을 벗어나는 full-bleed — topbar 와 같은 기법이다. */
 .vw-shell {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  padding: 26px clamp(20px, 3vw, 40px) 60px;
   display: grid;
-  grid-template-columns: minmax(320px, 5fr) minmax(0, 6fr) minmax(260px, 4fr);
-  gap: 20px;
+  grid-template-columns: minmax(340px, 5fr) minmax(0, 6fr) minmax(300px, 4fr);
+  gap: 22px;
   align-items: start;
+  max-width: 1680px;
+  /* full-bleed 상태에서도 중앙 정렬 */
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-left: 0;
+}
+
+.vw-player-sticky {
+  position: sticky;
+  top: 76px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.vw-video {
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--ink);
+  box-shadow: var(--shadow-lg);
+}
+
+.vw-video iframe {
   width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
 }
-.vw-player-sticky { position: sticky; top: 76px; }
-.vw-video { aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: #000; }
-.vw-video iframe { width: 100%; height: 100%; border: 0; display: block; }
-.vw-player-meta { padding: 12px 4px 0; }
-.vw-report { min-width: 0; }
+
+.vw-meta {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+}
+
+/* 출처 뱃지 — CAPTION/STT. 면접 화면의 상태 뱃지들과 같은 tone 문법이다. */
+.vw-source {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.vw-source[data-source="STT"] {
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+
+.vw-report {
+  min-width: 0;
+}
+
+/* 타임스탬프 칩 — 눌리는 것이므로 정적 .chip 과 구분되게 accent 를 입힌다. */
+.vw-tchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 11px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12.5px;
+  font-weight: 650;
+  white-space: nowrap;
+  box-shadow: none;
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
+}
+
+.vw-tchip:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px -6px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
 .vw-frame {
-  display: block; width: 100%; padding: 0; margin: 0 0 8px;
-  border: 1px solid var(--border, #e5e5e5); border-radius: 10px;
-  overflow: hidden; cursor: pointer; background: none;
+  display: block;
+  width: 100%;
+  padding: 0;
+  margin: 0 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--bg-subtle);
+  box-shadow: none;
+  transition: box-shadow 0.16s ease, border-color 0.16s ease;
 }
-.vw-frame img { display: block; width: 100%; max-height: 220px; object-fit: cover; }
-.vw-chat { min-width: 0; }
+
+.vw-frame:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-lg);
+}
+
+.vw-frame img {
+  display: block;
+  width: 100%;
+  max-height: 230px;
+  object-fit: cover;
+  transition: transform 0.25s ease;
+}
+
+.vw-frame:hover img {
+  transform: scale(1.02);
+}
+
+/* ── QnA 채팅 ── */
+.vw-chat {
+  min-width: 0;
+}
+
 .vw-chat-panel {
-  position: sticky; top: 76px;
-  display: flex; flex-direction: column;
+  position: sticky;
+  top: 76px;
+  display: flex;
+  flex-direction: column;
   max-height: calc(100vh - 96px);
-  border: 1px solid var(--border, #e5e5e5); border-radius: 12px; padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow);
+  padding: 16px;
 }
-.vw-chat-log { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; min-height: 160px; padding: 4px 2px; }
-.vw-msg { border-radius: 10px; padding: 8px 12px; max-width: 95%; font-size: 0.95em; }
-.vw-msg[data-role="user"] { align-self: flex-end; background: var(--chip-bg, #f0f0f0); }
-.vw-msg[data-role="assistant"] { align-self: flex-start; border: 1px solid var(--border, #e5e5e5); }
-.vw-msg[data-error] { border-color: var(--warn, #c96); }
-.vw-chat-input { display: flex; gap: 8px; margin-top: 10px; }
-.vw-chat-input input { flex: 1; min-width: 0; }
-@media (max-width: 1100px) {
-  .vw-shell { grid-template-columns: 1fr; }
-  .vw-player-sticky, .vw-chat-panel { position: static; max-height: none; }
+
+.vw-chat-log {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 180px;
+  padding: 4px 2px;
+}
+
+.vw-msg {
+  border-radius: var(--radius);
+  padding: 9px 13px;
+  max-width: 94%;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.vw-msg[data-role="user"] {
+  align-self: flex-end;
+  background: var(--accent-soft);
+  color: var(--fg);
+  border-bottom-right-radius: 4px;
+}
+
+.vw-msg[data-role="assistant"] {
+  align-self: flex-start;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  border-bottom-left-radius: 4px;
+}
+
+.vw-msg[data-error] {
+  background: var(--warn-bg);
+  border-color: color-mix(in srgb, var(--warn) 25%, transparent);
+  color: var(--warn);
+}
+
+.vw-chat-input {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* 채팅·URL 입력 — textarea 와 같은 시각 문법 (테두리·포커스 링). */
+.vw-input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+  color: var(--fg);
+  font: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.vw-input:hover {
+  border-color: var(--border-strong);
+}
+
+.vw-input:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+/* 채팅 보내기 버튼 — 기본 버튼은 이 칸에 너무 크다. */
+.vw-chat-input button {
+  padding: 9px 18px;
+}
+
+/* ── 진행 상태 (폴러) ── */
+.vw-progress {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow);
+  padding: 22px 24px;
+}
+
+/* ── 목록 상태 뱃지 ── */
+.vw-status {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  color: var(--fg-muted);
+}
+
+.vw-status[data-status="DONE"] {
+  background: var(--ok-bg);
+  border-color: color-mix(in srgb, var(--ok) 25%, transparent);
+  color: var(--ok);
+}
+
+.vw-status[data-status="RUNNING"],
+.vw-status[data-status="PENDING"] {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 25%, transparent);
+  color: var(--accent);
+}
+
+.vw-status[data-status="FAILED"] {
+  background: var(--danger-bg);
+  border-color: color-mix(in srgb, var(--danger) 25%, transparent);
+  color: var(--danger);
+}
+
+@media (max-width: 1180px) {
+  .vw-shell {
+    grid-template-columns: 1fr;
+    max-width: 760px;
+  }
+
+  .vw-player-sticky,
+  .vw-chat-panel {
+    position: static;
+    max-height: none;
+  }
+
+  .vw-chat-log {
+    max-height: 420px;
+  }
 }
