@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import VideoStatusPoller from "@/components/VideoStatusPoller";
 import VideoWorkspace from "@/components/VideoWorkspace";
+import VideosShell from "@/components/VideosShell";
 import { BackendError } from "@/lib/backend";
 import { getVideoSummary, type VideoSummaryDetail } from "@/lib/videos";
 
@@ -36,12 +37,14 @@ export default async function VideoReportPage({ params }: PageProps) {
 
   if (!summary) {
     return (
-      <section className="section">
-        <div className="notice" data-tone="info">
-          <p style={{ margin: "0 0 10px" }}>이 요약을 찾을 수 없습니다.</p>
-          <Link href="/videos">다른 영상 요약하기 →</Link>
-        </div>
-      </section>
+      <VideosShell>
+        <section className="section" style={{ marginTop: 0 }}>
+          <div className="notice" data-tone="info">
+            <p style={{ margin: "0 0 10px" }}>이 요약을 찾을 수 없습니다.</p>
+            <Link href="/videos" className="cta">다른 영상 요약하기 →</Link>
+          </div>
+        </section>
+      </VideosShell>
     );
   }
 
@@ -52,8 +55,9 @@ export default async function VideoReportPage({ params }: PageProps) {
 
   const heading = summary.title ?? "영상 요약";
 
+  // 대기·진행·실패·거부 — 메뉴 셸 안에서 보여준다. 완료 화면만 3분할 전폭이다.
   return (
-    <>
+    <VideosShell>
       <section className="hero">
         <h1 style={{ fontSize: 24 }}>{heading}</h1>
         <p>
@@ -82,9 +86,9 @@ export default async function VideoReportPage({ params }: PageProps) {
       )}
 
       <p className="footnote">
-        <Link href="/videos/history">요약 기록</Link>
+        <Link href="/videos/history" className="cta">요약 기록</Link>
       </p>
-    </>
+    </VideosShell>
   );
 }
 
