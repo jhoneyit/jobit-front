@@ -140,6 +140,10 @@ function QnaPanel({ summaryId, onSeek }: { summaryId: string; onSeek: (sec: numb
   const [pending, setPending] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
+  // 스트리밍 중인 마지막 답변 턴을 바꿔 끼운다 — 델타마다 텍스트가 자란다.
+  const patchLast = (patch: (last: Turn) => Turn) =>
+    setTurns((prev) => [...prev.slice(0, -1), patch(prev[prev.length - 1])]);
+
   const ask = async (e: React.FormEvent) => {
     e.preventDefault();
     const question = input.trim();
@@ -148,19 +152,44 @@ function QnaPanel({ summaryId, onSeek }: { summaryId: string; onSeek: (sec: numb
     setPending(true);
     const history = turns.slice(-6).map((t) => `${t.role === "user" ? "질문" : "답변"}: ${t.text}`);
     setTurns((prev) => [...prev, { role: "user", text: question }]);
+    let streaming = false; // 답변 턴을 이미 추가했는가 — 오류를 어디에 쓸지 가른다
     try {
       const res = await fetch("/api/videos/qna", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ summaryId, question, history }),
       });
-      const body = (await res.json()) as { answer?: string; refs?: number[]; error?: string };
-      setTurns((prev) => [...prev, res.ok && body.answer
-        ? { role: "assistant", text: body.answer, refs: body.refs ?? [] }
-        : { role: "assistant", text: body.error ?? "답변을 받지 못했습니다.", error: true }]);
+      // 스트림을 열기 전의 실패(검증·한도)는 JSON 으로 온다 — content-type 이 갈림길이다.
+      if (!res.ok || !(res.headers.get("content-type") ?? "").includes("text/event-stream")) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        setTurns((prev) => [...prev,
+          { role: "assistant", text: body.error ?? "답변을 받지 못했습니다.", error: true }]);
+        return;
+      }
+      setTurns((prev) => [...prev, { role: "assistant", text: "" }]);
+      streaming = true;
+      for await (const { name, data } of sseFrames(res.body!)) {
+        if (name === "delta") {
+          const piece = String((data as { text?: string }).text ?? "");
+          patchLast((last) => ({ ...last, text: last.text + piece }));
+        } else if (name === "done") {
+          // 최종본으로 교체 — 서버가 refs 를 재검증한 뒤의 정본이다.
+          const final = data as { answer?: string; refs?: number[] };
+          patchLast((last) => ({
+            role: "assistant", text: final.answer ?? last.text, refs: final.refs ?? [],
+          }));
+        } else if (name === "error") {
+          const message = String((data as { message?: string }).message ?? "답변을 받지 못했습니다.");
+          patchLast(() => ({ role: "assistant", text: message, error: true }));
+        }
+      }
+      // done 도 error 도 없이 스트림이 닫힌 경우 — 빈 턴을 오류로 바꾼다.
+      patchLast((last) => last.text || last.error != null || last.refs != null ? last
+        : { role: "assistant", text: "답변이 중단됐습니다. 다시 시도해 주세요.", error: true });
     } catch {
-      setTurns((prev) => [...prev,
-        { role: "assistant", text: "답변을 받지 못했습니다. 잠시 후 다시 시도해 주세요.", error: true }]);
+      const message = "답변을 받지 못했습니다. 잠시 후 다시 시도해 주세요.";
+      if (streaming) patchLast(() => ({ role: "assistant", text: message, error: true }));
+      else setTurns((prev) => [...prev, { role: "assistant", text: message, error: true }]);
     } finally {
       setPending(false);
       setTimeout(() => scrollRef.current?.scrollTo({ top: 99999, behavior: "smooth" }), 50);
@@ -193,7 +222,8 @@ function QnaPanel({ summaryId, onSeek }: { summaryId: string; onSeek: (sec: numb
             )}
           </div>
         ))}
-        {pending && (
+        {/* 첫 델타가 오면 답변 턴 자체가 자라므로 점은 그때까지만 보인다 */}
+        {pending && !(turns[turns.length - 1]?.role === "assistant" && turns[turns.length - 1].text) && (
           <div className="streaming" role="status">
             <span className="dot" /> 답변을 만드는 중…
           </div>
@@ -216,6 +246,41 @@ function QnaPanel({ summaryId, onSeek }: { summaryId: string; onSeek: (sec: numb
       </form>
     </div>
   );
+}
+
+/**
+ * SSE 바이트 스트림 → {이벤트 이름, data JSON} 시퀀스.
+ *
+ * 프레임은 빈 줄로 구분되고 네트워크 조각은 그 경계를 무시하고 잘려 온다 — 버퍼에 모아
+ * `\n\n` 단위로만 꺼낸다 (questions 라우트와 같은 이유). 파싱 안 되는 프레임은 버린다.
+ */
+async function* sseFrames(body: ReadableStream<Uint8Array>) {
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let sep = buffer.indexOf("\n\n");
+    while (sep >= 0) {
+      const frame = buffer.slice(0, sep);
+      buffer = buffer.slice(sep + 2);
+      sep = buffer.indexOf("\n\n");
+      let name = "message";
+      const dataLines: string[] = [];
+      for (const line of frame.split("\n")) {
+        if (line.startsWith("event:")) name = line.slice(6).trim();
+        else if (line.startsWith("data:")) dataLines.push(line.slice(5).trim());
+      }
+      if (dataLines.length === 0) continue;
+      try {
+        yield { name, data: JSON.parse(dataLines.join("\n")) as unknown };
+      } catch {
+        // 반쪽 프레임이 아니라 진짜 깨진 데이터다 — 건너뛴다.
+      }
+    }
+  }
 }
 
 function formatTimestamp(sec: number): string {

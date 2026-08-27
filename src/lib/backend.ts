@@ -79,9 +79,11 @@ function signOwnerKey(ownerKey: string | null | undefined): string | null {
 
 export async function backendFetch(
   path: string,
-  init: RequestInit & { ownerKey?: string | null } = {},
+  init: RequestInit & { ownerKey?: string | null; timeoutMs?: number } = {},
 ): Promise<Response> {
-  const { ownerKey, headers, ...rest } = init;
+  // timeoutMs 는 응답 본문을 다 읽을 때까지의 상한이다 — 스트리밍(SSE)은 연결이 분 단위로
+  // 살아 있으므로 기본 120초로는 중간에 끊긴다. 스트리밍 호출부만 넉넉히 넘긴다.
+  const { ownerKey, headers, timeoutMs, ...rest } = init;
   const signature = signOwnerKey(ownerKey);
 
   const res = await fetch(`${baseUrl()}${path}`, {
@@ -92,7 +94,7 @@ export async function backendFetch(
       ...(signature ? { "X-Owner-Auth": signature } : {}),
       ...headers,
     },
-    signal: AbortSignal.timeout(TIMEOUT_MS),
+    signal: AbortSignal.timeout(timeoutMs ?? TIMEOUT_MS),
     // 백엔드 응답은 사용자·시점마다 다르다. Next 의 기본 캐시를 타면 안 된다.
     cache: "no-store",
   }).catch((err: unknown) => {

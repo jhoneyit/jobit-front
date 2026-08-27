@@ -86,18 +86,26 @@ export interface VideoQnaAnswer {
 }
 
 /** 영상 내용 질문 — 질문 하나가 GPU 추론 하나라 소유자 한도를 소비한다. */
-export async function askVideoQna(
+/**
+ * QnA 는 SSE 다 (2026-08-27) — 본문을 파싱하지 않고 업스트림 Response 를 그대로 돌려준다.
+ * 라우트가 스트림을 관통시키고, 프레임 해석은 화면(QnaPanel)이 한다.
+ * 타임아웃을 따로 주는 이유: 답 생성이 분 단위라 기본 120초로는 스트림이 중간에 끊긴다.
+ */
+export async function askVideoQnaStream(
   ownerKey: string,
   summaryId: string,
   question: string,
   history: string[],
-): Promise<VideoQnaAnswer> {
-  const res = await backendFetch(`/api/video-summaries/${summaryId}/qna`, {
+): Promise<Response> {
+  return backendFetch(`/api/video-summaries/${summaryId}/qna`, {
     method: "POST",
     ownerKey,
+    // JSON 을 병기해야 한다 — 이벤트 스트림만 받겠다고 하면 스트림 전의 실패(404·409·429)가
+    // JSON 오류를 협상하지 못해 전부 500 으로 뭉개진다 (실측).
+    headers: { accept: "text/event-stream, application/json" },
     body: JSON.stringify({ question, history }),
+    timeoutMs: 600_000,
   });
-  return (await res.json()) as VideoQnaAnswer;
 }
 
 /** 섹션 캡처 바이트 — 프론트 프록시 라우트가 브라우저 <img> 에 전달한다. */
