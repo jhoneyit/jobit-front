@@ -3162,7 +3162,9 @@ main:not(:has(> .hero-band)) {
   display: grid;
   grid-template-columns: minmax(340px, 5fr) minmax(0, 6fr) minmax(300px, 4fr);
   gap: 22px;
-  align-items: start;
+  /* 기둥은 stretch(기본값)여야 한다 — sticky 자식은 부모 높이 안에서만 미끄러지므로,
+     align-items: start 로 기둥을 내용물 높이로 줄이면 좌·우 패널이 스크롤을 따라오지 못한다.
+     기둥(.vw-player·.vw-chat)은 투명 래퍼라 늘어나도 보이는 것이 없다. */
   max-width: 1680px;
   /* full-bleed 상태에서도 중앙 정렬 */
   position: relative;
