@@ -1721,15 +1721,7 @@ button.chip-add:focus-visible {
   padding: 0 10px 4px;
 }
 
-.hero-meta {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin: 20px 0 0;
-  font-size: 13px;
-  color: var(--fg-subtle);
-}
-
+/* 라이브 점 — 지금은 인기 키워드 티커 라벨이 쓴다 (원래 자리였던 hero-meta 줄은 제거됐다). */
 .hero-live {
   width: 6px;
   height: 6px;
@@ -1747,11 +1739,6 @@ button.chip-add:focus-visible {
   align-items: center;
   gap: 12px;
   margin: 18px auto 0;
-  padding: 7px 16px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--bg-raised) 72%, transparent);
-  backdrop-filter: blur(6px);
 }
 
 .hero-kw-label {

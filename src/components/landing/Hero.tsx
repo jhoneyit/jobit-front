@@ -211,11 +211,6 @@ export default function Hero({ signedIn, keywords }: { signedIn: boolean; keywor
             <KeywordTicker items={keywords} />
           </motion.div>
         )}
-
-        <motion.p className="hero-meta" {...rise(0.24)}>
-          <span className="hero-live" aria-hidden="true" />
-          로그인 없이 바로 사용 · 첫 질문까지 보통 1~2초
-        </motion.p>
       </div>
     </section>
   );
