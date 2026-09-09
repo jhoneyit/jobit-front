@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
 import { MAX_JD_LENGTH, MIN_JD_LENGTH } from "@/lib/jd/normalize";
 import { useJdSubmit } from "@/lib/jd/use-submit";
+import KeywordTicker, { type KeywordItem } from "@/components/landing/KeywordTicker";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -31,7 +32,7 @@ const SIGNIN_HREF = `/signin?callbackUrl=${encodeURIComponent("/analyze")}`;
  * **로그인 전에는 펼치지 않고 /signin 으로 보낸다.** 이때 클릭을 가로채지 않고
  * 링크의 href 자체를 바꾸는 이유는 위와 같다 — 새 탭·JS 없음에서도 같은 곳으로 가야 한다.
  */
-export default function Hero({ signedIn }: { signedIn: boolean }) {
+export default function Hero({ signedIn, keywords }: { signedIn: boolean; keywords: KeywordItem[] }) {
   const reduced = useReducedMotion();
   const [open, setOpen] = useState(false);
   const taRef = useRef<HTMLTextAreaElement>(null);
@@ -204,6 +205,12 @@ export default function Hero({ signedIn }: { signedIn: boolean }) {
             </div>
           </motion.div>
         </motion.div>
+
+        {keywords.length > 0 && (
+          <motion.div {...rise(0.2)}>
+            <KeywordTicker items={keywords} />
+          </motion.div>
+        )}
 
         <motion.p className="hero-meta" {...rise(0.24)}>
           <span className="hero-live" aria-hidden="true" />
