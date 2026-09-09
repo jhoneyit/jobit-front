@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { auth } from "@/auth";
+import { backendFetch } from "@/lib/backend";
 import Hero from "@/components/landing/Hero";
 import HeroDemo from "@/components/landing/HeroDemo";
 import Reveal from "@/components/landing/Reveal";
@@ -20,9 +21,19 @@ import Reveal from "@/components/landing/Reveal";
 export default async function HomePage() {
   const session = await auth();
 
+  // 히어로 밑 인기 키워드 티커의 재료 — 분석된 공고의 스택 집계다 (StackRanking 과 같은 원천).
+  // 곁들이라 실패해도 랜딩은 뜬다: 백엔드가 죽어 있으면 티커만 조용히 사라진다.
+  let keywords: { name: string; postings: number }[] = [];
+  try {
+    const res = await backendFetch("/api/stats/stacks?limit=8");
+    keywords = ((await res.json()) as { items: typeof keywords }).items;
+  } catch (err) {
+    console.error("[landing] 인기 키워드를 불러오지 못했습니다:", err);
+  }
+
   return (
     <>
-      <Hero signedIn={Boolean(session?.user)} />
+      <Hero signedIn={Boolean(session?.user)} keywords={keywords} />
 
       {/* ── 실제 결과 ────────────────────────────────────────────── */}
       <section className="lp-sec" aria-labelledby="sample">
