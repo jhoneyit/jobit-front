@@ -30,6 +30,15 @@ export default function QuestionStream({
   const [error, setError] = useState<string | null>(null);
   const [expected, setExpected] = useState(10);
   const [sorted, setSorted] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+
+  // 첫 질문까지 1~2분간 이벤트가 없다 (로컬 모델의 thinking 구간). 죽은 게 아니라는 걸
+  // 보여줄 수 있는 건 경과 시간뿐이라 클라이언트가 직접 센다 — 서버 신호가 필요 없다.
+  useEffect(() => {
+    if (status !== "streaming") return;
+    const timer = setInterval(() => setElapsed((s) => s + 1), 1000);
+    return () => clearInterval(timer);
+  }, [status]);
 
   /**
    * StrictMode 가 effect 를 두 번 돌려도 요청을 두 번 보내지 않게 막는다.
@@ -172,9 +181,14 @@ export default function QuestionStream({
           <div className="streaming">
             <span className="dot" />
             {questions.length === 0
-              ? "질문을 만들고 있습니다…"
+              ? `공고에 맞는 질문을 설계하고 있습니다… (${formatElapsed(elapsed)} 경과)`
               : `질문을 만들고 있습니다… (${questions.length}/${expected})`}
           </div>
+          {questions.length === 0 && (
+            <p className="hint" style={{ margin: "6px 0 0" }}>
+              질문마다 꼬리질문과 답변 뼈대를 함께 만듭니다 — 첫 질문까지 보통 1~2분 걸립니다.
+            </p>
+          )}
           {Array.from({ length: Math.min(remaining, 2) }).map((_, i) => (
             <div className="skeleton" key={`sk-${i}`} />
           ))}
@@ -188,4 +202,9 @@ export default function QuestionStream({
       )}
     </div>
   );
+}
+
+function formatElapsed(sec: number): string {
+  if (sec < 60) return `${sec}초`;
+  return `${Math.floor(sec / 60)}분 ${sec % 60}초`;
 }
