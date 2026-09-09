@@ -5,7 +5,8 @@ import { getOrCreateSessionId } from "@/lib/rate-limit";
 import type { Question, QuestionStreamEvent } from "@/lib/types";
 
 export const runtime = "nodejs";
-export const maxDuration = 300;
+// 백엔드 SSE 타임아웃(QuestionController 20분)과 정합 — 로컬 생성은 완주에 3분 안팎이다.
+export const maxDuration = 1200;
 
 /**
  * GET /api/questions?jobPostingId=...
@@ -35,7 +36,9 @@ export async function GET(req: Request) {
   try {
     const upstream = await backendFetch(
       `/api/questions?jobPostingId=${encodeURIComponent(jobPostingId)}`,
-      { ownerKey, headers: { accept: "text/event-stream" } },
+      // timeoutMs: 기본 120초는 로컬 생성(실측 172~185초)을 중간에 끊는다 — Ollama 전환 후
+      // 이 경로가 브라우저에서 한 번도 완주하지 못한 원인이었다. 백엔드 SSE 상한과 맞춘다.
+      { ownerKey, headers: { accept: "text/event-stream" }, timeoutMs: 1_200_000 },
     );
     return sse(translate(upstream));
   } catch (err) {
