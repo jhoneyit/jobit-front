@@ -14,6 +14,25 @@ export default function VideoWorkspace({ summary }: { summary: VideoSummaryDetai
   const playerRef = useRef<HTMLIFrameElement | null>(null);
   const report = summary.report!;
   const captured = new Set(summary.capturedFrames);
+  const [copied, setCopied] = useState(false);
+
+  // 보고서 GET 은 소유자 없이 읽히는 전역 캐시 자산이다 (api.md) — 이 주소가 곧 공유 링크다.
+  const copyLink = async () => {
+    const url = `${window.location.origin}/videos/${summary.summaryId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      // 클립보드 API 가 막힌 환경(비보안 컨텍스트 등) — 임시 선택 복사로 폴백
+      const ta = document.createElement("textarea");
+      ta.value = url;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const seek = (sec: number) => {
     playerRef.current?.contentWindow?.postMessage(
@@ -48,6 +67,10 @@ export default function VideoWorkspace({ summary }: { summary: VideoSummaryDetai
                 {summary.source === "STT" ? "음성 인식" : "자막"}
               </span>
               <a href={summary.url} target="_blank" rel="noreferrer">유튜브에서 열기 ↗</a>
+              <button type="button" className="vw-tchip" onClick={copyLink}
+                aria-live="polite" aria-label="공유 링크 복사">
+                {copied ? "복사됨 ✓" : "🔗 링크 복사"}
+              </button>
             </p>
             <p className="hint" style={{ margin: "10px 0 0" }}>
               <Link href="/videos" className="cta">← 영상 요약</Link>
